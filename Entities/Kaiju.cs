@@ -6,18 +6,27 @@ using System.Threading.Tasks;
 
 namespace KaijuGame.Entities
 {
+    enum KaijuSize
+    {
+        Small,
+        Medium,
+        Large,
+        Huge,
+        Massive,
+        Gigantic,
+    }
     class Kaiju
     {
-        private string size;
+        private int size;
         private int difficulty;
 
-        public Kaiju(string kaijuSize, int difficultyRating)
+        public Kaiju(int kaijuSize, int difficultyRating)
         {
             size = kaijuSize;
             difficulty = difficultyRating;
         }
 
-        public string Size
+        public int Size
         {
             get => size;
             set => size = value;
