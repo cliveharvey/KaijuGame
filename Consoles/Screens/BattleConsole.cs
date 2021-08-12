@@ -17,9 +17,14 @@ namespace KaijuGame.Consoles.Screens
         public Action ExtractTeam { get; set; }
 
 
-        private readonly Console missionStatusView;
-        private readonly Console userActionView;
+        private Console missionStatusView;
+        private Console userActionView;
         public BattleConsole() : base(80, 25)
+        {
+            SetupViews();
+        }
+
+        private void SetupViews()
         {
             missionStatusView = new Console(80, 15);
             userActionView = new Console(80, 10);
@@ -39,9 +44,9 @@ namespace KaijuGame.Consoles.Screens
 
             // Setup sub view
             userActionView.Position = new Point(0, 16);
-            userActionView.Children.Add(new ExtractTeamConsole() { ExtractButton = ExtractTheTeam, BattleConsole=this });
-
+            userActionView.Children.Add(new ExtractTeamConsole() { ExtractButton = ExtractTheTeam, BattleConsole = this });
         }
+
 
         public void SendThemIn(Console missionStatusView) {
             var squad = MakeSquad();
@@ -118,7 +123,7 @@ namespace KaijuGame.Consoles.Screens
                     Position = new Point(1, 3),
                     Theme = new ButtonLinesTheme()
                 };
-                button.Click += (s, a) => { ExtractButton?.Invoke(); };
+                button.Click += (s, a) => { ExtractButton?.Invoke(); BattleConsole.SetupViews(); };
                 Controls.Add(button);
 
 
