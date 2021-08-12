@@ -27,5 +27,16 @@ namespace KaijuGame.Entities
             get => members;
             set => members = value;
         }
+
+        public bool SquadCombat(int difficulty)
+        {
+            var success = 0;
+            foreach (var soldier in members)
+            {
+                if (soldier.Combat(difficulty))
+                    success++;
+            }
+            return success > 3;
+        }
     }
 }
