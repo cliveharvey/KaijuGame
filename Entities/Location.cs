@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KaijuGame.Consoles.Entities
+namespace KaijuGame.Entities
 {
     class Location
     {
