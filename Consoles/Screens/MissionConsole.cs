@@ -67,7 +67,7 @@ namespace KaijuGame.Consoles.Screens
                 Position = new Point(1, 3),
                 Theme = new ButtonLinesTheme()
             };
-            button.Click += (s, a) => SadConsole.UI.Window.Message("This button presently does nothing!", "Close");
+            button.Click += (s, a) => SadConsole.UI.Window.Message("This is what you're paid for soldier, now do your duty!", "Close");
             Controls.Add(button);
         }
     }
