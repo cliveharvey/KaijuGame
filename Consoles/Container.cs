@@ -28,7 +28,7 @@ namespace KaijuGame.Consoles
                 new CustomConsole(new MainScreenConsole(), "Main Screen", "Beep Boop" ),
                 new CustomConsole(new BaseConsole(), "Main Base", "Beep Boop" ),
                 new CustomConsole(new MissionConsole(){DeployTeam = MoveNextConsole }, "Mission Summary", "The reports are coming in!" ),
-                new CustomConsole(new BattleConsole(), "Battle Report", "Beep Boop" ),
+                new CustomConsole(new BattleConsole(){ExtractTeam = MoveNextConsole }, "Battle Report", "Beep Boop" ),
                 new CustomConsole(new RewardConsole(), "Rewards", "Beep Boop" ),
             };
 

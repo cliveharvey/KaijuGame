@@ -63,11 +63,18 @@ namespace KaijuGame.Entities
             else if (combatRoll < difficulty - 20)
             {
                 Status = SoldierStatus.Injured;
+                Skill = Skill + (difficulty / 2);
                 return false;
             }
             else if (combatRoll < difficulty - 10)
             {
+                Skill = Skill + (difficulty / 2);
                 Status = SoldierStatus.Skratched;
+            }
+            else
+            {
+                Skill = Skill + difficulty;
+                return true;
             }
             return true;
         }

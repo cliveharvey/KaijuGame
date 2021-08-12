@@ -17,16 +17,16 @@ namespace KaijuGame.Entities
     }
     class Kaiju
     {
-        private int size;
+        private KaijuSize size;
         private int difficulty;
 
         public Kaiju(int kaijuSize, int difficultyRating)
         {
-            size = kaijuSize;
+            size = (KaijuSize)kaijuSize;
             difficulty = difficultyRating;
         }
 
-        public int Size
+        public KaijuSize Size
         {
             get => size;
             set => size = value;
