@@ -4,6 +4,8 @@ using SadConsole;
 using SadRogue.Primitives;
 using SadConsole.UI.Controls;
 using SadConsole.UI.Themes;
+using KaijuGame.Entities;
+
 
 namespace KaijuGame.Consoles.Screens
 {
@@ -77,9 +79,10 @@ namespace KaijuGame.Consoles.Screens
         SadConsole.Instructions.DrawString typingInstruction;
         public WritingConsole() : base(80, 15)
         {
+            var location = new Location();
             string[] text = new string[]
             {
-                "A terrifying new breed of Kaiju has been spotted terrorizing Toronto!",
+                "A terrifying new breed of Kaiju has been spotted terrorizing " + location.City + "!",
                 "It has already toppled the CN tower, and is making its way towards the Clio office!",
             };
 
