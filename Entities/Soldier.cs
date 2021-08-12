@@ -9,7 +9,7 @@ namespace KaijuGame.Entities
     enum SoldierStatus
     {
         Alive,
-        Skratched,
+        Scratched,
         Injured,
         KIA
     }
@@ -69,7 +69,7 @@ namespace KaijuGame.Entities
             else if (combatRoll < difficulty - 10)
             {
                 Skill = Skill + (difficulty / 2);
-                Status = SoldierStatus.Skratched;
+                Status = SoldierStatus.Scratched;
             }
             else
             {

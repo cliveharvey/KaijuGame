@@ -39,12 +39,16 @@ namespace KaijuGame.Consoles.Screens
 
             // Setup sub view
             userActionView.Position = new Point(0, 16);
+            userActionView.Children.Add(new ExtractTeamConsole() { ExtractButton = ExtractTheTeam, BattleConsole=this });
 
+        }
+
+        public void SendThemIn(Console missionStatusView) {
             var squad = MakeSquad();
             var kaiju = MakeKaiju();
-
-            missionStatusView.Children.Add(new BattleSummaryConsole(squad,kaiju));
-            userActionView.Children.Add(new ExtractTeamConsole() { ExtractButton = ExtractTheTeam });
+            missionStatusView.DefaultBackground = Color.Green;
+            missionStatusView.Clear();
+            missionStatusView.Children.Add(new BattleSummaryConsole(squad, kaiju));
         }
 
         public void ExtractTheTeam()
@@ -96,16 +100,28 @@ namespace KaijuGame.Consoles.Screens
         internal class ExtractTeamConsole : SadConsole.UI.ControlsConsole
         {
             public Action ExtractButton { get; set; }
+            public BattleConsole BattleConsole { get; set; }
             public ExtractTeamConsole() : base(80, 15)
             {
                 var button = new Button(20, 3)
                 {
-                    Text = "Extract Troops",
+                    Text = "Send Them In!",
                     Position = new Point(1, 0),
+                    Theme = new ButtonLinesTheme()
+                };
+                button.Click += (s, a) => { BattleConsole.SendThemIn(BattleConsole.missionStatusView); };
+                Controls.Add(button);
+
+                button = new Button(20, 3)
+                {
+                    Text = "Extract Troops",
+                    Position = new Point(1, 3),
                     Theme = new ButtonLinesTheme()
                 };
                 button.Click += (s, a) => { ExtractButton?.Invoke(); };
                 Controls.Add(button);
+
+
             }
         }
 
@@ -116,7 +132,7 @@ namespace KaijuGame.Consoles.Screens
 
             for (int x = 0; x < 5; x++)
             {
-                var soldier = new Soldier(r.Next(3, 8), r.Next(14, 40));
+                var soldier = new Soldier(r.Next(3, 8), r.Next(10, 35));
                 soldiers.Add(soldier);
             }
             return new Squad("Boom Boom Shoe Makers", soldiers);
@@ -125,7 +141,9 @@ namespace KaijuGame.Consoles.Screens
         private Kaiju MakeKaiju()
         {
             var r = new Random();
-            var kaiju = new Kaiju(r.Next(3), r.Next(10, 30));
+            var kSize = r.Next(3);
+            var kDif = (kSize + 1) * 10;
+            var kaiju = new Kaiju(kSize, r.Next(kDif, kDif+10));
             return kaiju;
         }
     }
