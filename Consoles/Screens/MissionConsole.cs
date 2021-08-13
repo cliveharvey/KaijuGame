@@ -13,10 +13,17 @@ namespace KaijuGame.Consoles.Screens
     {
         public Action DeployTeam { get; set; }
 
-        private readonly Console missionBriefView;
-        private readonly Console userActionView;
+        private Console missionBriefView;
+        private Console userActionView;
+        public Kaiju Kaiju { get; set; }
 
-        public MissionConsole() : base(80, 31)
+        public MissionConsole(Kaiju kaiju) : base(80, 31)
+        {
+            Kaiju = kaiju;
+            SetupViews();
+        }
+
+        public void SetupViews()
         {
             missionBriefView = new Console(80, 15);
             userActionView = new Console(80, 10);
@@ -30,14 +37,13 @@ namespace KaijuGame.Consoles.Screens
             Children.Add(missionBriefView);
             Children.Add(userActionView);
 
-
             // Setup main view
             missionBriefView.Position = new Point(0, 0);
 
             // Setup sub view
             userActionView.Position = new Point(0, 16);
 
-            missionBriefView.Children.Add(new WritingConsole());
+            missionBriefView.Children.Add(new WritingConsole(Kaiju));
             userActionView.Children.Add(new DeployTeamConsole() { DeployButton = DeployTheTeam });
 
             IsVisible = false;
@@ -46,6 +52,10 @@ namespace KaijuGame.Consoles.Screens
         public void DeployTheTeam()
         {
             DeployTeam?.Invoke();
+            Children.Clear();
+            missionBriefView.DefaultBackground = Color.Red;
+            missionBriefView.Clear();
+            SetupViews();
         }
     }
 
@@ -77,10 +87,8 @@ namespace KaijuGame.Consoles.Screens
     internal class WritingConsole : Console
     {
         SadConsole.Instructions.DrawString typingInstruction;
-        public WritingConsole() : base(80, 15)
+        public WritingConsole(Kaiju monster) : base(80, 15)
         {
-            var monster = Entities.KaijuGenerator.makeKaiju();
-
             var location = new Location();
             string[] text = new string[]
             {
