@@ -79,6 +79,8 @@ namespace KaijuGame.Consoles.Screens
         SadConsole.Instructions.DrawString typingInstruction;
         public WritingConsole() : base(80, 15)
         {
+            var monster = Entities.KaijuGenerator.makeKaiju();
+
             var location = new Location();
             string[] text = new string[]
             {
@@ -86,7 +88,14 @@ namespace KaijuGame.Consoles.Screens
                 "It has already toppled the CN tower, and is making its way towards the Clio office!",
             };
 
-            typingInstruction = new SadConsole.Instructions.DrawString(SadConsole.ColoredString.Parse(string.Join("\r\n", text)));
+            string[] text2 = new string[]
+            {
+                $"The Kaiju \"{monster.nameEnglish}\" has begun its attack on {location.City}",
+                $"Resembling a {monster.Size} {monster.creature} with {monster.characteristic}, the {monster.material} beast",
+                $"attacks buildings with its {monster.weapon}! Beware!",
+            };
+
+            typingInstruction = new SadConsole.Instructions.DrawString(SadConsole.ColoredString.Parse(string.Join("\r\n", text2)));
             typingInstruction.TotalTimeToPrint = 7; // 0.25 seconds per line of text
             Cursor.Position = new Point(1, 1);
             Cursor.IsEnabled = false;
