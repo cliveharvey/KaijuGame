@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using SadConsole;
 using SadRogue.Primitives;
 using Console = SadConsole.Console;
-using System.Threading.Tasks;
 using KaijuGame.Entities;
 using KaijuGame.TextDump;
 
@@ -17,12 +14,13 @@ namespace KaijuGame.Consoles.Screens
     internal class BattleConsole : Console
     {
         public Action ExtractTeam { get; set; }
-
+        public Kaiju Kaiju { get; set; }
 
         private Console missionStatusView;
         private Console userActionView;
-        public BattleConsole() : base(80, 31)
+        public BattleConsole(Kaiju kaiju) : base(80, 31)
         {
+            Kaiju = kaiju;
             SetupViews();
         }
 
@@ -52,7 +50,7 @@ namespace KaijuGame.Consoles.Screens
 
         public void SendThemIn(Console missionStatusView) {
             var squad = MakeSquad();
-            var kaiju = MakeKaiju();
+            var kaiju = Kaiju;
             missionStatusView.DefaultBackground = Color.Green;
             missionStatusView.Clear();
             missionStatusView.Children.Add(new BattleSummaryConsole(squad, kaiju));
@@ -84,7 +82,7 @@ namespace KaijuGame.Consoles.Screens
 
             private void BattleText(List<string> text, Squad squad, Kaiju kaiju)
             {
-                text.Add("The " + kaiju.Size + " Kaiju has made landfall!");
+                text.Add($" \"{ kaiju.nameEnglish}\"  the {kaiju.Size} {kaiju.creature} has made landfall!");
                 var success = squad.SquadCombat(kaiju.Difficulty);
                 var battleText = new BattleText();
                 foreach (var member in squad.Members)
@@ -108,8 +106,6 @@ namespace KaijuGame.Consoles.Screens
 
             }
         }
-
-
 
         internal class ExtractTeamConsole : SadConsole.UI.ControlsConsole
         {
@@ -150,11 +146,6 @@ namespace KaijuGame.Consoles.Screens
                 soldiers.Add(soldier);
             }
             return new Squad("Boom Boom Shoe Makers", soldiers);
-        }
-
-        private Kaiju MakeKaiju()
-        {
-            return KaijuGenerator.makeKaiju();
         }
     }
 }

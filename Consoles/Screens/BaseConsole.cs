@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Console = SadConsole.Console;
-using System.Threading.Tasks;
 using SadConsole.UI.Themes;
 using SadRogue.Primitives;
 using SadConsole.UI.Controls;
@@ -87,7 +82,7 @@ namespace KaijuGame.Consoles.Screens
 
         private bool isThereKaijuAttack()
         {
-            for(int i = 0; i < daysPassedSinceLastAttack; i++)
+            for (int i = 0; i < daysPassedSinceLastAttack; i++)
             {
                 if (randy.Next(1, 21) == 20 || daysPassedSinceLastAttack == 20)
                     return true;

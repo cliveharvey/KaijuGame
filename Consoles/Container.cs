@@ -1,10 +1,6 @@
 ﻿using KaijuGame.Consoles.Screens;
+using KaijuGame.Entities;
 using SadConsole;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KaijuGame.Consoles
 {
@@ -23,18 +19,22 @@ namespace KaijuGame.Consoles
             selectedConsoleContainer = new ScreenObject();
             selectedConsoleContainer.Position = (0, headerConsole.AbsoluteArea.MaxExtentY + 1);
 
+            var _kaiju = KaijuGenerator.makeKaiju();
+
             consoles = new CustomConsole[]
             {
                 new CustomConsole(new MainScreenConsole(), "Main Screen", "Beep Boop" ),
                 new CustomConsole(new BaseConsole(){KaijuAttack = MoveNextConsole }, "Main Base", "Current Base Status" ),
-                new CustomConsole(new MissionConsole(){DeployTeam = MoveNextConsole }, "Mission Summary", "The reports are coming in!" ),
-                new CustomConsole(new BattleConsole(){ExtractTeam = MoveNextConsole }, "Battle Report", "Beep Boop" ),
-                new CustomConsole(new RewardConsole(), "Rewards", "Beep Boop" ),
+                new CustomConsole(new MissionConsole(_kaiju){DeployTeam = MoveNextConsole }, "Mission Summary", "The reports are coming in!" ),
+                new CustomConsole(new BattleConsole(_kaiju){ExtractTeam = MoveNextConsole }, "Battle Report", "Beep Boop" ),
+                new CustomConsole(new RewardConsole(), "Rewards", "Beep Boop" )
             };
-
 
             MoveNextConsole();
         }
+
+        Kaiju missionKaiju;
+        Kaiju battleKaiju;
         public void MoveNextConsole()
         {
             currentConsoleIndex++;
@@ -57,6 +57,21 @@ namespace KaijuGame.Consoles
 
             GameHost.Instance.FocusedScreenObjects.Set(selectedConsole);
             headerConsole.SetConsole(consoles[currentConsoleIndex].Title, consoles[currentConsoleIndex].Summary);
+
+            if (currentConsoleIndex == 1)
+            {
+                var kaiju = KaijuGenerator.makeKaiju();
+                missionKaiju = kaiju;
+                battleKaiju = kaiju;
+            }
+            if (currentConsoleIndex == 2)
+            {
+                ((MissionConsole)consoles[2].Console).Kaiju = missionKaiju;
+            }
+            if (currentConsoleIndex == 4)
+            {
+                ((BattleConsole)consoles[3].Console).Kaiju = battleKaiju;
+            }
         }
     }
 }
