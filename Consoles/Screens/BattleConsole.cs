@@ -113,23 +113,23 @@ namespace KaijuGame.Consoles.Screens
             public BattleConsole BattleConsole { get; set; }
             public ExtractTeamConsole() : base(80, 15)
             {
-                var button = new Button(20, 3)
+                var button1 = new Button(20, 3)
                 {
                     Text = "Send Them In!",
                     Position = new Point(1, 0),
                     Theme = new ButtonLinesTheme()
                 };
-                button.Click += (s, a) => { BattleConsole.SendThemIn(BattleConsole.missionStatusView); };
-                Controls.Add(button);
+                button1.Click += (s, a) => { BattleConsole.SendThemIn(BattleConsole.missionStatusView); Controls.Remove(button1); };
+                Controls.Add(button1);
 
-                button = new Button(20, 3)
+                var button2 = new Button(20, 3)
                 {
                     Text = "Extract Troops",
                     Position = new Point(1, 3),
                     Theme = new ButtonLinesTheme()
                 };
-                button.Click += (s, a) => { ExtractButton?.Invoke(); BattleConsole.SetupViews(); };
-                Controls.Add(button);
+                button2.Click += (s, a) => { ExtractButton?.Invoke(); BattleConsole.SetupViews(); };
+                Controls.Add(button2);
 
 
             }
