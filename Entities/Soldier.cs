@@ -1,16 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace KaijuGame.Entities
 {
     enum SoldierStatus
     {
+        [Description("[c:r f:green]Alive")]
         Alive,
+        [Description("[c:r f:blue]Shaken")]
         Shaken,
+        [Description("[c:r f:red]Injured")]
         Injured,
+        [Description("[c:r f:magenta]KIA")]
         KIA
     }
     class Soldier

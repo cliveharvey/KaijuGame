@@ -98,9 +98,10 @@ namespace KaijuGame.Consoles.Screens
 
             string[] text2 = new string[]
             {
-                $"The Kaiju \"{monster.nameEnglish}\" has begun its attack on {location.City}",
-                $"Resembling a {monster.Size} {monster.characteristic} {monster.creature}, the {monster.material} beast",
-                $"attacks buildings with its {monster.weapon}! Beware!",
+                $"The Kaiju [c:r f:Yellow]\"{monster.nameEnglish}\" [c:r f:white]has begun its attack on {location.City}",
+                $"Resembling a {monster.Size} {monster.creature} with {monster.characteristic}.",
+                $"The {monster.material} beast attacks buildings with its {monster.weapon}!",
+                $"[c:r f:Red]Beware!",
             };
 
             typingInstruction = new SadConsole.Instructions.DrawString(SadConsole.ColoredString.Parse(string.Join("\r\n", text2)));

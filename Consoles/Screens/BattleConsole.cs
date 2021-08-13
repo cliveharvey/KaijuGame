@@ -8,6 +8,7 @@ using KaijuGame.TextDump;
 
 using SadConsole.UI.Controls;
 using SadConsole.UI.Themes;
+using KaijuGame.Helpers;
 
 namespace KaijuGame.Consoles.Screens
 {
@@ -82,7 +83,7 @@ namespace KaijuGame.Consoles.Screens
 
             private void BattleText(List<string> text, Squad squad, Kaiju kaiju)
             {
-                text.Add($" \"{ kaiju.nameEnglish}\"  the {kaiju.Size} {kaiju.creature} has made landfall!");
+                text.Add($"[c:r f:Yellow]\"{ kaiju.nameEnglish}\" [c:r f:white]the {kaiju.Size} {kaiju.creature} has made landfall!");
                 var success = squad.SquadCombat(kaiju.Difficulty);
                 var battleText = new BattleText();
                 foreach (var member in squad.Members)
@@ -90,18 +91,18 @@ namespace KaijuGame.Consoles.Screens
                     battleText.BatteTextSummary(text, member);
                     if (member.Status != 0)
                     {
-                        text.Add("Squad Member " + member.Name + " was " + member.Status);
+                        text.Add("[c:r f:white]Squad Member [c:r f:Yellow]" + member.Name + " [c:r f:white]was " + EnumHelper.GetDescription(member.Status));
                     }
                     text.Add("");
                 }
 
                 if (success)
                 {
-                    text.Add("The Mission was Successful!");
+                    text.Add("[c:r f:Green]The Mission was Successful!");
                 }
                 else
                 {
-                    text.Add("Mission Failed");
+                    text.Add("[c:r f:Red]Mission Failed");
                 }
 
             }

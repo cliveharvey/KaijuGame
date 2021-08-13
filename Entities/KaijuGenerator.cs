@@ -67,20 +67,20 @@ namespace KaijuGame.Entities
 
         private static string getMonsterName(string[,] frontCompounds, string[,] rearCompounds, string[,] ofXs, int firstName, int frontCompound, int rearCompound, int firstAdjective, int secondAdjective, int hyphenCompound, int theX, int ofX, bool epithet, bool hasFirstAdjective, bool hasSecondAdjective, bool hasHyphenCompound, bool hasOfX)
         {
-            var monsterName = adjectives[firstName, 1] + " " + frontCompounds[frontCompound, 1] + rearCompounds[rearCompound, 1];
+            var monsterName = CapitalizeFirstLetter(adjectives[firstName, 1]) + " " + CapitalizeFirstLetter(frontCompounds[frontCompound, 1]) + CapitalizeFirstLetter(rearCompounds[rearCompound, 1]);
             if (epithet)
             {
                 var tempString = "";
                 if (hasFirstAdjective)
-                    tempString = tempString + adjectives[firstAdjective, 1] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[firstAdjective, 1]) + " ";
                 if (hasSecondAdjective)
-                    tempString = tempString + adjectives[secondAdjective, 1] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[secondAdjective, 1]) + " ";
                 if (hasHyphenCompound)
-                    tempString = tempString + adjectives[hyphenCompound, 1] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[hyphenCompound, 1]) + " ";
 
-                tempString = tempString + theXs[theX, 1];
+                tempString = tempString + CapitalizeFirstLetter(theXs[theX, 1]);
                 if (hasOfX)
-                    tempString = tempString + " " + ofXs[ofX, 1];
+                    tempString = tempString + " " + CapitalizeFirstLetter(ofXs[ofX, 1]);
                 monsterName = monsterName + tempString;
             }
             return monsterName;
@@ -88,24 +88,33 @@ namespace KaijuGame.Entities
 
         private static string getEnglishName(string[,] frontCompounds, string[,] rearCompounds, string[,] ofXs, int firstName, int frontCompound, int rearCompound, int firstAdjective, int secondAdjective, int hyphenCompound, int theX, int ofX, bool epithet, bool hasFirstAdjective, bool hasSecondAdjective, bool hasHyphenCompound, bool hasOfX)
         {
-            var englishName = adjectives[firstName, 1] + " " + frontCompounds[frontCompound, 0] + rearCompounds[rearCompound, 0];
+            var englishName = CapitalizeFirstLetter(adjectives[firstName, 1]) + " " + CapitalizeFirstLetter(frontCompounds[frontCompound, 0]) + CapitalizeFirstLetter(rearCompounds[rearCompound, 0]);
             if (epithet)
             {
                 var tempString = " the ";
                 if (hasFirstAdjective)
-                    tempString = tempString + adjectives[firstAdjective, 0] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[firstAdjective, 0]) + " ";
                 if (hasSecondAdjective)
-                    tempString = tempString + adjectives[secondAdjective, 0] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[secondAdjective, 0]) + " ";
                 if (hasHyphenCompound)
-                    tempString = tempString + adjectives[hyphenCompound, 0] + " ";
+                    tempString = tempString + CapitalizeFirstLetter(adjectives[hyphenCompound, 0]) + " ";
 
-                tempString = tempString + theXs[theX, 0];
+                tempString = tempString + CapitalizeFirstLetter(theXs[theX, 0]);
                 if (hasOfX)
-                    tempString = tempString + " " + ofXs[ofX, 0];
+                    tempString = tempString + " " + CapitalizeFirstLetter(ofXs[ofX, 0]);
                 englishName = englishName + tempString;
             }
             return englishName;
         }
+
+        private static string CapitalizeFirstLetter(string word)
+        {
+            if (word.Length == 1)
+                return word.ToUpper();
+            return char.ToUpper(word[0]) + word.Substring(1);
+        }
+
+
 
         public static string[] Size = new string[]
 {
@@ -151,6 +160,7 @@ namespace KaijuGame.Entities
             "golem",
             "gorilla",
             "horse",
+            "hydra",
             "minotaur",
             "ooze",
             "ostritch",
@@ -180,11 +190,11 @@ namespace KaijuGame.Entities
 
         public static Dictionary<string, string[]> Characteristic = new()
         {
-            { "changes colours", new string[] { "blur" } },
-            { "eyes", new string[] { "compound eyes", "eye stalks", "eyeless" } },
-            { "furry", new string[] { "furry" } },
-            { "slimy", new string[] { "slimy" } },
-            { "stinky", new string[] { "stinky" } },
+            { "changes colours", new string[] { "it's skin a blur, making it hard to make out" } },
+            { "eyes", new string[] { "compound eyes", "eye stalks", "no visible eyes to speak of", "a cluster of eyes defining its face" } },
+            { "furry", new string[] { "thick fur", "sparse fur" } },
+            { "slimy", new string[] { "slime oozing off its body" } },
+            { "stinky", new string[] { "a putrid stinky odour" } },
             { "reflective", new string[] { "reflective" } },
         };
 
@@ -194,6 +204,8 @@ namespace KaijuGame.Entities
             { "spittle", new string[] { "tar", "oil", "lava", "steam", "acid", "alchohol" } },
             { "breath", new string[] { "fire", "cold", "lightning", "smoke", "poison" } },
             { "stinger", new string[] { "poisonous" } },
+            { "mandibles", new string[] { "jagged", "razor sharp" } },
+
         };
 
         public static string[,] adjectives = new string[,] {{"ace", "alak"}, {"ageless", "gatal"}, {"ancient", "zustash"}, {"angelic", "sedil"}, {"angry", "ustos"}, {"armored", "tosid"}, {"artificial", "berim"}, {"ashen", "ibruk"}, {"autumnal", "thathil"}, {"awe-inspiring", "gostang"}, {"bad", "asdos"}, {"bald", "roder"}, {"big", "etag"}, {"black", "udir"}, {"blind", "nural"}, {"bloated", "okag"}, {"bloody", "nashon"}, {"blue", "enor"}, {"bold", "murak"}, {"bridled", "shalig"}, {"bright", "shin"}, {"brilliant", "akim"}, {"busy", "kitig"}, {"buttery", "reked"}, {"clear", "es"}, {"cold", "nekik"}, {"crazed", "uling"}, {"crazy", "dibesh"}, {"creamy", "berath"}, {"creppy", "innok"}, {"cross", "gesul"}, {"crystalline", "zas"}, {"dank", "unul"}, {"dark", "umom"}, {"dead", "nokor"}, {"dear", "asen"}, {"deep", "thol"}, {"domestic", "rodnul"}, {"doomed", "okbod"}, {"dutiful", "etest"}, {"east", "em"}, {"eerie", "rukal"}, {"elder", "okir"}, {"eternal", "zilir"}, {"everlasting", "issun"}, {"everseeing", "ilus"}, {"evil", "gedor"},
