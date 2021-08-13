@@ -75,12 +75,12 @@ namespace KaijuGame.TextDump
 
         public void BatteTextSummary(List<string> text, Soldier member)
         {
-            text.Add(member.Name + " " + MovementText(member.Success));
-            text.Add(member.Name + " " + ActionText(member.Success));
-            text.Add(OutcomeText(member.Success));
+            text.Add("[c:r f:white]" + member.Name + " " + MovementText(member.Success));
+            text.Add("[c:r f:white]" + member.Name + " " + ActionText(member.Success));
+            text.Add("[c:r f:white]" + OutcomeText(member.Success));
             if (member.Status>0)
             {
-                text.Add(member.Name + " " + InjuryText());
+                text.Add("[c:r f:white]" + member.Name + " " + InjuryText());
             }
         }
 
