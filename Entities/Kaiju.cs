@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KaijuGame.Entities
 {
-    enum KaijuSize
+    public enum KaijuSize
     {
         Small,
         Medium,
@@ -15,15 +15,19 @@ namespace KaijuGame.Entities
         Massive,
         Gigantic,
     }
-    class Kaiju
+    public class Kaiju
     {
         private KaijuSize size;
         private int difficulty;
 
-        public Kaiju(int kaijuSize, int difficultyRating)
+
+        public Kaiju()
         {
-            size = (KaijuSize)kaijuSize;
-            difficulty = difficultyRating;
+            var r = new Random();
+            var kSize = r.Next(3);
+
+            Size = (KaijuSize)kSize;
+            Difficulty = ((kSize + 1) * 10);
         }
 
         public KaijuSize Size
@@ -37,5 +41,13 @@ namespace KaijuGame.Entities
             get => difficulty;
             set => difficulty = value;
         }
+
+        public string nameEnglish { get; set; }
+        public string nameMonster { get; set; }
+        public string creature { get; set; }
+        public string movement { get; set; }
+        public string material { get; set; }
+        public string characteristic { get; set; }
+        public string weapon { get; set; }
     }
 }

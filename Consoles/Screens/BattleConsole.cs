@@ -153,11 +153,7 @@ namespace KaijuGame.Consoles.Screens
 
         private Kaiju MakeKaiju()
         {
-            var r = new Random();
-            var kSize = r.Next(3);
-            var kDif = (kSize + 1) * 10;
-            var kaiju = new Kaiju(kSize, r.Next(kDif, kDif+10));
-            return kaiju;
+            return KaijuGenerator.makeKaiju();
         }
     }
 }
