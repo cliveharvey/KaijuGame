@@ -9,7 +9,7 @@ namespace KaijuGame.Entities
     enum SoldierStatus
     {
         Alive,
-        Scratched,
+        Shaken,
         Injured,
         KIA
     }
@@ -18,6 +18,7 @@ namespace KaijuGame.Entities
         private string name;
         private int skill;
         private SoldierStatus status;
+        private bool success;
 
         public Soldier(string soldierName, int soldierSkill) {
             name = soldierName;
@@ -42,6 +43,12 @@ namespace KaijuGame.Entities
         {
             get => skill;
             set => skill = value;
+        }
+
+        public bool Success
+        {
+            get => success;
+            set => success = value;
         }
 
         public SoldierStatus Status
@@ -69,12 +76,13 @@ namespace KaijuGame.Entities
             else if (combatRoll < difficulty - 10)
             {
                 Skill = Skill + (difficulty / 2);
-                Status = SoldierStatus.Scratched;
+                Status = SoldierStatus.Shaken;
+                success = true;
             }
             else
             {
                 Skill = Skill + difficulty;
-                return true;
+                success = true;
             }
             return true;
         }

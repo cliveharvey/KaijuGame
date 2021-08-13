@@ -7,6 +7,8 @@ using SadRogue.Primitives;
 using Console = SadConsole.Console;
 using System.Threading.Tasks;
 using KaijuGame.Entities;
+using KaijuGame.TextDump;
+
 using SadConsole.UI.Controls;
 using SadConsole.UI.Themes;
 
@@ -67,40 +69,46 @@ namespace KaijuGame.Consoles.Screens
             public BattleSummaryConsole(Squad squad, Kaiju kaiju) : base(80, 15)
             {
                 List<string> createdText = new List<string>();
-                createdText.Add("The " + kaiju.Size + " Kaiju has made landfall!");
+                BattleText(createdText, squad, kaiju);
+
+                var text = createdText.ToArray();
+
+                typingInstruction = new SadConsole.Instructions.DrawString(SadConsole.ColoredString.Parse(string.Join("\r\n", text)));
+                typingInstruction.TotalTimeToPrint = 14; // 0.25 seconds per line of text
+                Cursor.Position = new Point(1, 1);
+                Cursor.IsEnabled = true;
+                Cursor.IsVisible = true;
+                typingInstruction.Cursor = Cursor;
+                SadComponents.Add(typingInstruction);
+            }
+
+            private void BattleText(List<string> text, Squad squad, Kaiju kaiju)
+            {
+                text.Add("The " + kaiju.Size + " Kaiju has made landfall!");
                 var success = squad.SquadCombat(kaiju.Difficulty);
+                var battleText = new BattleText();
                 foreach (var member in squad.Members)
                 {
+                    battleText.BatteTextSummary(text, member);
                     if (member.Status != 0)
                     {
-                        createdText.Add("Squad Member " + member.Name + " was " + member.Status);
-                    }
-                    else
-                    {
-                        createdText.Add("Squad Member " + member.Name + " was unhurt");
+                        text.Add("Squad Member " + member.Name + " was " + member.Status);
                     }
                 }
 
                 if (success)
                 {
-                    createdText.Add("The Mission was Successful!");
+                    text.Add("The Mission was Successful!");
                 }
                 else
                 {
-                    createdText.Add("Mission Failed");
+                    text.Add("Mission Failed");
                 }
 
-                var text = createdText.ToArray();
-
-                typingInstruction = new SadConsole.Instructions.DrawString(SadConsole.ColoredString.Parse(string.Join("\r\n", text)));
-                typingInstruction.TotalTimeToPrint = 7; // 0.25 seconds per line of text
-                Cursor.Position = new Point(1, 1);
-                Cursor.IsEnabled = false;
-                Cursor.IsVisible = true;
-                typingInstruction.Cursor = Cursor;
-                SadComponents.Add(typingInstruction);
             }
         }
+
+
 
         internal class ExtractTeamConsole : SadConsole.UI.ControlsConsole
         {
