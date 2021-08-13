@@ -21,7 +21,7 @@ namespace KaijuGame.Consoles.Screens
 
         private Console missionStatusView;
         private Console userActionView;
-        public BattleConsole() : base(80, 25)
+        public BattleConsole() : base(80, 31)
         {
             SetupViews();
         }
@@ -94,6 +94,7 @@ namespace KaijuGame.Consoles.Screens
                     {
                         text.Add("Squad Member " + member.Name + " was " + member.Status);
                     }
+                    text.Add("");
                 }
 
                 if (success)

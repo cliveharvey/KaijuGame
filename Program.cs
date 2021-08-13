@@ -14,7 +14,7 @@ namespace KaijuGame
         {
             Settings.WindowTitle = "Kaiju Text Adventue";
             // Setup the engine and create the main window.
-            Game.Create(80, 25);
+            Game.Create(80,31);
 
             // Hook the start event so we can add consoles to the system.
             Game.Instance.OnStart = Init;

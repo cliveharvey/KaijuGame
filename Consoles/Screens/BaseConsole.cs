@@ -21,7 +21,7 @@ namespace KaijuGame.Consoles.Screens
         public Action KaijuAttack;
         private readonly SadConsole.Components.Timer progressTimer;
 
-        public BaseConsole() : base(80, 25)
+        public BaseConsole() : base(80, 31)
         {
             int x = 5;
 

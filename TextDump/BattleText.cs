@@ -82,7 +82,6 @@ namespace KaijuGame.TextDump
             {
                 text.Add(member.Name + " " + InjuryText());
             }
-            text.Add("");
         }
 
         private string MovementText(bool success)

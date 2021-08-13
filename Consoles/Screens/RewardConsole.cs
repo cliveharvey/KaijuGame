@@ -9,7 +9,7 @@ namespace KaijuGame.Consoles.Screens
 {
     internal class RewardConsole : Console
     {
-        public RewardConsole() : base(80, 25)
+        public RewardConsole() : base(80, 31)
         {
 
         }

@@ -16,7 +16,7 @@ namespace KaijuGame.Consoles.Screens
         private readonly Console missionBriefView;
         private readonly Console userActionView;
 
-        public MissionConsole() : base(80, 25)
+        public MissionConsole() : base(80, 31)
         {
             missionBriefView = new Console(80, 15);
             userActionView = new Console(80, 10);
