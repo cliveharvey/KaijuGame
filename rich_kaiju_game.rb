@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
-require_relative 'battle_text'
-require_relative 'squad'
-require_relative 'kaiju'
-require_relative 'location'
+require_relative 'generators/battle_text'
+require_relative 'models/squad'
+require_relative 'models/kaiju'
+require_relative 'models/location'
 
 class RichKaijuGame
   STATUS_ICONS = {

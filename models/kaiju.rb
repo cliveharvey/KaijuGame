@@ -1,4 +1,4 @@
-require_relative 'kaiju_generator'
+require_relative '../generators/kaiju_generator'
 
 class Kaiju
   SIZES = [:small, :medium, :large, :huge, :massive, :gigantic].freeze
