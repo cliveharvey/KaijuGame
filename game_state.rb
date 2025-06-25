@@ -2,6 +2,8 @@
 
 require 'json'
 require_relative 'models/squad'
+require_relative 'generators/soldier_name_generator'
+require_relative 'generators/squad_name_generator'
 
 class GameState
   SAVE_FILE = 'kaiju_save.json'
@@ -70,8 +72,11 @@ class GameState
   end
 
   def create_new_squads
-    @squad_alpha = Squad.new("Alpha Squadron", 5)
-    @squad_beta = Squad.new("Beta Squadron", 5)
+    # Generate unique squad names
+    squad_names = SquadNameGenerator.generate_pair_of_squad_names
+
+    @squad_alpha = Squad.new(squad_names[0], 5)
+    @squad_beta = Squad.new(squad_names[1], 5)
     puts "🆕 New squads created: #{@squad_alpha.name} and #{@squad_beta.name}"
   end
 
@@ -121,7 +126,7 @@ class GameState
     [@squad_alpha, @squad_beta].compact.each do |squad|
       puts "   #{squad.name}: #{squad.soldiers.count} soldiers"
       if squad.soldiers.any?
-        veteran_count = squad.soldiers.count { |s| s.total_skill > 100 }
+        veteran_count = squad.soldiers.count { |s| s.total_skill > 90 }
         avg_skill = squad.soldiers.sum(&:total_skill) / squad.soldiers.count
         puts "     Average Skill: #{avg_skill}, Veterans: #{veteran_count}"
       end
@@ -168,24 +173,15 @@ class GameState
   def create_recruit
     # Create a medium-low skill recruit (12-20 range instead of 10-30)
     recruit = Soldier.new(
-      rand(3..8),           # name length
+      nil,                  # name will be generated in Soldier class
       rand(12..20),         # offense
       rand(12..20),         # defense
       rand(12..20),         # grit
       rand(12..20)          # leadership
     )
 
-    # Add some backstory flavor
-    recruit_backstories = [
-      " (Former City Guard)",
-      " (Military Academy Graduate)",
-      " (Volunteer Fighter)",
-      " (Transfer from Navy)",
-      " (Local Militia)",
-      " (Emergency Recruit)"
-    ]
-
-    recruit.name += recruit_backstories.sample
+    # Override with specialized recruit name that includes background
+    recruit.name = SoldierNameGenerator.generate_recruit_name
     recruit
   end
 
@@ -217,7 +213,7 @@ class GameState
     # Recreate soldiers
     squad_data['soldiers'].each do |soldier_data|
       soldier = Soldier.new(
-        soldier_data['name'].length,
+        nil,                         # name will be generated but we'll override it
         soldier_data['offense'],
         soldier_data['defense'],
         soldier_data['grit'],

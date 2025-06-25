@@ -338,3 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Kaiju Defense Force game save files
+kaiju_save.json
+*.save.json

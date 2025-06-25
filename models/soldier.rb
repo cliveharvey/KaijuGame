@@ -1,11 +1,10 @@
-class Soldier
-  CONSONANTS = %w[b c d f g h j k l m n p q r s sh zh t v w x].freeze
-  VOWELS = %w[a e i o u ae y].freeze
+require_relative '../generators/soldier_name_generator'
 
+class Soldier
   attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success
 
-  def initialize(name_length = rand(3..8), offense = rand(10..30), defense = rand(10..30), grit = rand(10..30), leadership = rand(10..30))
-    @name = generate_name(name_length)
+  def initialize(name_length = nil, offense = rand(10..30), defense = rand(10..30), grit = rand(10..30), leadership = rand(10..30))
+    @name = SoldierNameGenerator.generate_name
     @offense = offense
     @defense = defense
     @grit = grit
@@ -112,6 +111,22 @@ class Soldier
     end
   end
 
+  def maybe_earn_nickname
+    # Veterans with high skills should have nicknames
+    # Define veteran status as total skill > 90 (was 100)
+    if total_skill > 90 && !@name.include?('"')
+      # 80% chance for veterans to earn nicknames (was 40%)
+      if rand < 0.8
+        @name = SoldierNameGenerator.generate_veteran_name(@name)
+      end
+    end
+
+    # Elite veterans (total skill > 110) ALWAYS get nicknames
+    if total_skill > 110 && !@name.include?('"')
+      @name = SoldierNameGenerator.generate_veteran_name(@name)
+    end
+  end
+
   private
 
   def improve_skills(experience_gain)
@@ -121,13 +136,8 @@ class Soldier
     @defense += rand(1..base_gain)
     @grit += rand(1..base_gain)
     @leadership += rand(1..base_gain)
-  end
 
-  def generate_name(length)
-    name = CONSONANTS.sample.capitalize + VOWELS.sample
-    (length - 2).times do |i|
-      name += i.even? ? CONSONANTS.sample : VOWELS.sample
-    end
-    name
+    # Check for nickname earning after improvement
+    maybe_earn_nickname
   end
 end
