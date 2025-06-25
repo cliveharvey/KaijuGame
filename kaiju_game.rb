@@ -1,140 +1,10 @@
 #!/usr/bin/env ruby
 
-class Soldier
-  CONSONANTS = %w[b c d f g h j k l m n p q r s sh zh t v w x].freeze
-  VOWELS = %w[a e i o u ae y].freeze
-
-  attr_accessor :name, :skill, :status, :success
-
-  def initialize(name_length = rand(3..8), skill = rand(10..35))
-    @name = generate_name(name_length)
-    @skill = skill
-    @status = :alive
-    @success = false
-  end
-
-  def combat(difficulty)
-    combat_roll = rand(@skill)
-
-    case combat_roll
-    when 0..(difficulty - 30)
-      @status = :kia
-      false
-    when (difficulty - 30)..(difficulty - 20)
-      @status = :injured
-      @skill += difficulty / 2
-      false
-    when (difficulty - 20)..(difficulty - 10)
-      @status = :shaken
-      @skill += difficulty / 2
-      @success = true
-    else
-      @skill += difficulty
-      @success = true
-    end
-  end
-
-  private
-
-  def generate_name(length)
-    name = CONSONANTS.sample.capitalize + VOWELS.sample
-    (length - 2).times do |i|
-      name += i.even? ? CONSONANTS.sample : VOWELS.sample
-    end
-    name
-  end
-end
-
-class Squad
-  attr_reader :name, :soldiers
-
-  def initialize(name = "Boom Boom Shoe Makers", soldier_count = 5)
-    @name = name
-    @soldiers = soldier_count.times.map { Soldier.new }
-  end
-
-  def combat(difficulty)
-    @soldiers.each { |soldier| soldier.combat(difficulty) }
-    @soldiers.count(&:success) >= 3
-  end
-end
-
-class Kaiju
-  SIZES = [:small, :medium, :large, :huge, :massive, :gigantic].freeze
-
-  CREATURES = %w[
-    alligator allosaurus ape aurochs baboon badger bat bear hawk boar
-    brontosaurus camel cat cow crab crocodile deer deinonychus dimetrodon
-    dragon eagle elephant elk snake frog fungus golem gorilla horse hydra
-    minotaur ooze ostrich ox spider squid tiger sloth slug
-  ].freeze
-
-  MATERIALS = {
-    flesh: %w[leathery skinless rash_covered rotting],
-    rock: %w[limestone granite obsidian pumice shale],
-    gem: %w[jade diamond gypsum opal quartz jasper],
-    metal: %w[iron steel bronze tin copper aluminum gold silver titanium],
-    other: %w[clay glass wood refuse ice wool]
-  }.freeze
-
-  CHARACTERISTICS = {
-    appearance: ['putrid stinky odour', 'glowing red eyes', 'massive claws', 'razor sharp teeth'],
-    movement: ['lightning fast', 'earth shaking steps', 'silent stalking', 'erratic twitching'],
-    special: ['acidic breath', 'regenerating wounds', 'mind control powers', 'invisible when still']
-  }.freeze
-
-  WEAPONS = {
-    melee: ['razor sharp claws', 'bone crushing jaws', 'whip-like tail', 'massive fists'],
-    ranged: ['acid spit', 'lightning breath', 'sonic roar', 'explosive spores'],
-    psychic: ['mind blast', 'fear aura', 'confusion waves', 'nightmare projection']
-  }.freeze
-
-  attr_reader :name_english, :name_monster, :size, :creature, :material,
-              :characteristic, :weapon, :difficulty
-
-  def initialize
-    @size = SIZES.sample
-    @difficulty = (SIZES.index(@size) + 1) * 10
-    @creature = CREATURES.sample
-    @material = MATERIALS.values.flatten.sample
-    @characteristic = CHARACTERISTICS.values.flatten.sample
-    @weapon = WEAPONS.values.flatten.sample
-
-    generate_names
-  end
-
-  private
-
-  def generate_names
-    # Simplified name generation - could be much more elaborate
-    @name_english = "#{random_syllable.capitalize}#{random_syllable} #{adjective_name}"
-    @name_monster = "#{random_syllable.capitalize}#{random_syllable} #{random_syllable.capitalize}#{random_syllable}"
-  end
-
-  def random_syllable
-    Soldier::CONSONANTS.sample + Soldier::VOWELS.sample
-  end
-
-  def adjective_name
-    ["the Destroyer", "the Terrible", "Devourer of Cities", "the Ancient One",
-     "the Unstoppable", "the Nightmare", "the Silent Death"].sample
-  end
-end
-
-class Location
-  CITIES = [
-    "Prague, Czech Republic", "Istanbul, Turkey", "Jerusalem, Israel",
-    "Accra, Ghana", "Colombo, Sri Lanka", "Buenos Aires, Argentina",
-    "Reykjavík, Iceland", "Denver, United States", "Abuja, Nigeria",
-    "Nashville, TN, United States", "Bratislava, Slovakia", "Lima, Peru"
-  ].freeze
-
-  attr_reader :city
-
-  def initialize
-    @city = CITIES.sample
-  end
-end
+require_relative 'generators/battle_text'
+require_relative 'models/squad'
+require_relative 'models/kaiju'
+require_relative 'models/location'
+require_relative 'main_menu'
 
 class KaijuGame
   STATUS_ICONS = {
@@ -145,14 +15,30 @@ class KaijuGame
   }.freeze
 
   def initialize
-    puts "╔════════════════════════════════════════════════════════╗"
-    puts "║                   KAIJU DEFENSE FORCE                  ║"
-    puts "║                    Text Adventure                       ║"
-    puts "╚════════════════════════════════════════════════════════╝"
+    @battle_text = BattleText.new
+  end
+
+  def show_game_specific_instructions
+    puts "⭐ ENHANCED FEATURES:"
+    puts "   • Detailed battle narratives with rich descriptions"
+    puts "   • Individual soldier combat stories"
+    puts "   • Immersive text and atmospheric presentation"
+  end
+
+  def show_game_specific_about
+    puts "   • Enhanced storytelling with atmospheric descriptions"
+    puts "   • Experience epic battles through rich narratives"
     puts
+    puts "⭐ Features detailed battle descriptions and immersive storytelling!"
   end
 
   def play
+    system('clear') || system('cls')
+    puts "╔════════════════════════════════════════════════════════╗"
+    puts "║                   MISSION BRIEFING                     ║"
+    puts "╚════════════════════════════════════════════════════════╝"
+    puts
+
     loop do
       mission = create_mission
       show_threat(mission)
@@ -166,7 +52,9 @@ class KaijuGame
       break unless play_again?
     end
 
-    puts "\n🎌 Thanks for playing Kaiju Defense Force!"
+    puts "\n🎌 Mission series complete! Returning to main menu..."
+    puts "Press Enter to continue..."
+    gets
   end
 
   private
@@ -211,57 +99,130 @@ class KaijuGame
     puts "\nPress Enter to begin the battle..."
     gets
 
-    show_battle(squad, kaiju)
+    show_rich_battle(squad, kaiju)
   end
 
   def show_squad(squad)
-    puts "\n📋 ASSEMBLING SQUAD: #{squad.name}"
-    puts "Members:"
-    squad.soldiers.each_with_index do |soldier, i|
-      puts "  #{i + 1}. #{soldier.name} (Skill: #{soldier.skill})"
-    end
+    squad.show_squad_details
   end
 
-  def show_battle(squad, kaiju)
-    system('clear') || system('cls')  # Cross-platform clear
+  def show_rich_battle(squad, kaiju)
+    system('clear') || system('cls')
 
-    puts "⚔️  BATTLE REPORT ⚔️"
+    puts "⚔️  DETAILED BATTLE REPORT ⚔️"
     puts "\n\"#{kaiju.name_english}\" the #{kaiju.size} #{kaiju.creature} has made landfall!"
+    puts
+
+    # Show enhanced battle intro
+    intro_texts = @battle_text.get_detailed_battle_intro(squad, kaiju)
+    intro_texts.each { |text| puts text }
+    puts
+    puts "=" * 60
+    puts "🎬 BATTLE COMMENCES..."
+    puts "=" * 60
+    puts
+
+    puts "📡 Establishing communications with field units..."
+    sleep(1.5)
+    puts "🎯 Tactical data incoming..."
+    sleep(1)
+    puts "📊 Beginning real-time battle analysis..."
+    sleep(1)
     puts
 
     success = squad.combat(kaiju.difficulty)
 
-    # Show individual soldier outcomes
-    squad.soldiers.each do |soldier|
-      puts "🪖 #{soldier.name}:"
+    # Show soldier results progressively
+    squad.soldiers.each_with_index do |soldier, index|
+      puts "🔄 Processing field report #{index + 1}/#{squad.soldiers.count}..."
+      sleep(0.8)
 
-      if soldier.success
-        puts "   ✓ Moved tactically into position"
-        puts "   ✓ Successfully engaged the kaiju"
-        puts "   ✓ Made a significant impact"
-      else
-        puts "   ✗ Struggled to find good positioning"
-        puts "   ✗ Had difficulty with the massive enemy"
-        puts "   ✗ Was overwhelmed by the kaiju's power"
-      end
+      puts "📡 INCOMING TRANSMISSION..."
+      sleep(0.5)
 
-      if soldier.status != :alive
-        puts "   #{STATUS_ICONS[soldier.status]} #{soldier.name} was #{soldier.status.to_s.upcase}!"
-      end
+      puts "🪖 SOLDIER #{index + 1}: #{soldier.name.upcase}"
+      puts "   Skills: #{soldier.skill_summary}"
       puts
+      sleep(0.3)
+
+      battle_texts = @battle_text.battle_summary(soldier)
+      battle_texts.each do |text|
+        puts "   #{text}"
+        sleep(0.7)  # Pause between each line for dramatic effect
+      end
+
+      # Status reveal with pause
+      sleep(0.5)
+      if soldier.status != :alive
+        puts "   #{STATUS_ICONS[soldier.status]} FINAL STATUS: #{soldier.status.to_s.upcase}"
+        if soldier.status == :kia
+          puts "   💔 Squad morale affected by loss..."
+          sleep(1)
+        end
+      else
+        puts "   #{STATUS_ICONS[soldier.status]} STATUS: #{soldier.status.to_s.upcase}"
+      end
+
+      puts
+      puts "-" * 50
+
+      # Pause between soldiers unless it's the last one
+      if index < squad.soldiers.count - 1
+        puts "⏳ Awaiting next field report..."
+        sleep(1.2)
+        puts
+      end
     end
 
-    # Show mission outcome
-    puts "-" * 50
+    # Dramatic pause before final results
+    puts
+    puts "📊 Compiling mission data..."
+    sleep(1.5)
+    puts "🎯 Analyzing battle outcome..."
+    sleep(1)
+
+    # Show enhanced mission outcome
+    puts
+    puts "=" * 60
+    puts "📋 FINAL MISSION SUMMARY"
+    puts "=" * 60
+
     if success
       puts "🎉 MISSION SUCCESSFUL!"
-      puts "The kaiju has been defeated and the city is saved!"
+      sleep(0.5)
+      puts "   The combined assault overwhelmed the kaiju!"
+      sleep(0.5)
+      puts "   #{squad.soldiers.count(&:success)} soldiers performed exceptionally!"
+      sleep(0.5)
+
+      # Show casualty breakdown
+      alive_count = squad.soldiers.count { |s| s.status == :alive }
+      shaken_count = squad.soldiers.count { |s| s.status == :shaken }
+      injured_count = squad.soldiers.count { |s| s.status == :injured }
+      kia_count = squad.soldiers.count { |s| s.status == :kia }
+
+      puts "   Casualties: #{alive_count} unharmed, #{shaken_count} shaken, #{injured_count} injured, #{kia_count} KIA"
+      sleep(0.5)
+
+      if kia_count == 0
+        puts "   🏆 FLAWLESS VICTORY - No lives lost!"
+      elsif kia_count == 1
+        puts "   ⚰️  One soldier made the ultimate sacrifice..."
+      elsif kia_count > 1
+        puts "   💀 Heavy casualties sustained in victory..."
+      end
     else
       puts "💥 MISSION FAILED"
-      puts "The kaiju continues its rampage..."
+      sleep(0.5)
+      puts "   The kaiju proved too powerful for the squad..."
+      sleep(0.5)
+      puts "   Only #{squad.soldiers.count(&:success)} soldiers managed effective attacks."
+      sleep(0.5)
+      puts "   The monster continues its rampage across the city!"
     end
 
-    puts "\nPress Enter to continue..."
+    puts
+    puts "📡 Transmission complete. Press Enter to continue..."
     gets
   end
 
@@ -277,5 +238,6 @@ end
 # Run the game
 if __FILE__ == $0
   game = KaijuGame.new
-  game.play
+  menu = MainMenu.new(game, "KAIJU DEFENSE FORCE", "Text Adventure")
+  menu.run
 end

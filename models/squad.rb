@@ -12,4 +12,12 @@ class Squad
     @soldiers.each { |soldier| soldier.combat(difficulty) }
     @soldiers.count(&:success) >= 3
   end
+
+  def show_squad_details
+    puts "\n📋 ASSEMBLING SQUAD: #{@name}"
+    puts "Members:"
+    @soldiers.each_with_index do |soldier, i|
+      puts "  #{i + 1}. #{soldier.name} (#{soldier.skill_summary})"
+    end
+  end
 end
