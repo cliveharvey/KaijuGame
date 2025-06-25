@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 
 class MainMenu
-  def initialize(game_instance, game_title = "KAIJU DEFENSE FORCE", game_subtitle = "Text Adventure")
+  def initialize(game_instance, game_state, game_title = "KAIJU DEFENSE FORCE", game_subtitle = "Text Adventure")
     @game = game_instance
+    @game_state = game_state
     @game_title = game_title
     @game_subtitle = game_subtitle
   end
@@ -16,13 +17,27 @@ class MainMenu
     puts
     puts "🎌 Welcome, Commander! The world needs your leadership!"
     puts
-    puts "Main Menu:"
-    puts "1. 🚀 Start New Mission"
-    puts "2. 📖 How to Play"
-    puts "3. 🌟 About the Game"
-    puts "4. 🚪 Quit Game"
-    puts
-    print "Enter your choice (1-4): "
+
+    # Show different menu based on whether save exists
+    if @game_state.save_exists?
+      puts "Campaign Menu:"
+      puts "1. 🔄 Continue Campaign"
+      puts "2. 🆕 New Campaign"
+      puts "3. 📊 Campaign Statistics"
+      puts "4. 📖 How to Play"
+      puts "5. 🌟 About the Game"
+      puts "6. 🚪 Quit Game"
+      puts
+      print "Enter your choice (1-6): "
+    else
+      puts "Main Menu:"
+      puts "1. 🚀 Start New Campaign"
+      puts "2. 📖 How to Play"
+      puts "3. 🌟 About the Game"
+      puts "4. 🚪 Quit Game"
+      puts
+      print "Enter your choice (1-4): "
+    end
   end
 
   def show_instructions
@@ -52,8 +67,13 @@ class MainMenu
     puts "🎮 GAMEPLAY:"
     puts "   • Choose whether to deploy your squad or let the city fall"
     puts "   • Watch the battle unfold and see your soldiers' fates"
-    puts "   • Successful missions help your soldiers gain experience"
+    puts "   • Build your squad over multiple missions and campaigns"
     puts "   • Can you save the world from the kaiju menace?"
+    puts
+    puts "💾 PERSISTENCE:"
+    puts "   • Your squad and progress are automatically saved"
+    puts "   • Soldiers gain experience and improve over time"
+    puts "   • Track your campaign statistics and achievements"
     puts
 
     # Allow games to add their own specific instructions
@@ -74,9 +94,10 @@ class MainMenu
     puts
     puts "🎬 Features:"
     puts "   • Procedurally generated kaiju with unique characteristics"
-    puts "   • Dynamic squad management with persistent soldier stats"
+    puts "   • Persistent squad management with soldier development"
     puts "   • Multiple cities to defend around the world"
     puts "   • Rich combat narrative with detailed battle reports"
+    puts "   • Campaign progression and statistics tracking"
     puts
 
     # Allow games to add their own specific about information
@@ -84,8 +105,9 @@ class MainMenu
 
     puts "🏆 Challenge yourself to:"
     puts "   • Save as many cities as possible"
-    puts "   • Keep your soldiers alive and experienced"
+    puts "   • Build an elite veteran squad"
     puts "   • Face increasingly dangerous kaiju threats"
+    puts "   • Achieve the highest win rate possible"
     puts
     puts "🤖 Created during a hackathon as a text-based strategy game"
     puts "   combining elements of tactical combat and monster hunting!"
@@ -99,26 +121,74 @@ class MainMenu
       show_main_menu
       choice = gets.chomp
 
-      case choice
-      when "1"
-        @game.play
-      when "2"
-        show_instructions
-      when "3"
-        show_about
-      when "4"
-        puts "\n🎌 Thanks for playing #{@game_title}!"
-        puts "   The world will remember your service, Commander!"
-        break
+      if @game_state.save_exists?
+        case choice
+        when "1"
+          handle_continue_campaign
+        when "2"
+          handle_new_campaign
+        when "3"
+          @game_state.show_campaign_stats
+          puts "\nPress Enter to continue..."
+          gets
+        when "4"
+          show_instructions
+        when "5"
+          show_about
+        when "6"
+          puts "\n🎌 Thanks for playing #{@game_title}!"
+          puts "   The world will remember your service, Commander!"
+          break
+        else
+          puts "\n❌ Invalid choice! Please enter 1-6."
+          puts "Press Enter to continue..."
+          gets
+        end
       else
-        puts "\n❌ Invalid choice! Please enter 1-4."
-        puts "Press Enter to continue..."
-        gets
+        case choice
+        when "1"
+          handle_new_campaign
+        when "2"
+          show_instructions
+        when "3"
+          show_about
+        when "4"
+          puts "\n🎌 Thanks for playing #{@game_title}!"
+          puts "   The world will remember your service, Commander!"
+          break
+        else
+          puts "\n❌ Invalid choice! Please enter 1-4."
+          puts "Press Enter to continue..."
+          gets
+        end
       end
     end
   end
 
   private
+
+  def handle_continue_campaign
+    if @game_state.load_game
+      @game.play(@game_state)
+    else
+      puts "❌ Failed to load campaign. Starting new campaign instead."
+      handle_new_campaign
+    end
+  end
+
+  def handle_new_campaign
+    if @game_state.save_exists?
+      puts "\n⚠️  This will delete your existing campaign!"
+      print "Are you sure? (y/n): "
+      confirm = gets.chomp.downcase
+      return unless confirm.start_with?('y')
+
+      @game_state.delete_save
+    end
+
+    @game_state.create_new_squads
+    @game.play(@game_state)
+  end
 
   def show_game_specific_instructions
     @game.show_game_specific_instructions

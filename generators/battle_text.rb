@@ -117,21 +117,46 @@ class BattleText
     # Determine soldier's dominant skill for personalized narrative
     dominant_skill = get_dominant_skill(soldier)
 
+    # Check if soldier is weak for special narrative
+    is_weak = soldier.is_weak_soldier?
+
     # Skill-based movement description
     movement_text = get_skill_based_text(dominant_skill, 'movement')
+    if is_weak && soldier.status == :alive
+      movement_text += " despite their inexperience"
+    elsif is_weak && soldier.status != :alive
+      movement_text += " showing incredible courage"
+    end
     texts << "🎯 #{soldier.name} #{movement_text}"
 
     # Skill-based action description
     action_text = get_skill_based_text(dominant_skill, 'action')
+    if is_weak && soldier.success
+      action_text += " far beyond their expected capability"
+    elsif is_weak && !soldier.success
+      action_text += " but was clearly outmatched"
+    end
     texts << "⚔️  #{soldier.name} #{action_text}"
 
     # Status-specific description
     if soldier.status == :kia
-      texts << "💀 #{soldier.name} #{@kia_descriptions.sample}"
+      kia_text = @kia_descriptions.sample
+      if is_weak
+        kia_text += " - a recruit who gave everything"
+      end
+      texts << "💀 #{soldier.name} #{kia_text}"
     elsif soldier.status == :injured
-      texts << "🩹 #{soldier.name} #{@injured_descriptions.sample}"
+      injured_text = @injured_descriptions.sample
+      if is_weak
+        injured_text += " despite their limited training"
+      end
+      texts << "🩹 #{soldier.name} #{injured_text}"
     elsif soldier.status == :shaken
-      texts << "⚡ #{soldier.name} #{@shaken_descriptions.sample}"
+      shaken_text = @shaken_descriptions.sample
+      if is_weak
+        shaken_text += " - understandable for a less experienced soldier"
+      end
+      texts << "⚡ #{soldier.name} #{shaken_text}"
     end
 
     # Mission outcome based on success
@@ -140,7 +165,11 @@ class BattleText
 
     # Add skill improvement note if soldier survived
     if soldier.status == :alive || soldier.status == :shaken
-      texts << "📈 #{soldier.name} gained valuable experience from the encounter"
+      if is_weak
+        texts << "📈 #{soldier.name} gained crucial combat experience from surviving the encounter"
+      else
+        texts << "📈 #{soldier.name} gained valuable experience from the encounter"
+      end
     end
 
     texts

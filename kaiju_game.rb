@@ -5,6 +5,7 @@ require_relative 'models/squad'
 require_relative 'models/kaiju'
 require_relative 'models/location'
 require_relative 'main_menu'
+require_relative 'game_state'
 
 class KaijuGame
   STATUS_ICONS = {
@@ -32,21 +33,40 @@ class KaijuGame
     puts "⭐ Features detailed battle descriptions and immersive storytelling!"
   end
 
-  def play
+  def play(game_state)
     system('clear') || system('cls')
     puts "╔════════════════════════════════════════════════════════╗"
     puts "║                   MISSION BRIEFING                     ║"
     puts "╚════════════════════════════════════════════════════════╝"
     puts
 
+    # Show campaign status
+    game_state.show_campaign_stats
+    puts "\nPress Enter to continue to mission selection..."
+    gets
+
     loop do
-      mission = create_mission
+      mission = create_mission(game_state)
+      break unless mission # Player cancelled
+
       show_threat(mission)
 
       if deploy_decision?
-        conduct_mission(mission)
+        result = conduct_mission(mission, game_state)
+
+        # Record mission results
+        casualties = result[:casualties]
+        game_state.record_mission_result(result[:success], result[:success], casualties)
+
+        # Handle recruitment for KIA replacements
+        handle_recruitment(mission[:squad], game_state, casualties)
+
+        # Save game after each mission
+        game_state.save_game
       else
         puts "\n💥 You chose to stay at base. #{mission[:location].city} falls to the kaiju..."
+        game_state.record_mission_result(false, false, 0)
+        game_state.save_game
       end
 
       break unless play_again?
@@ -59,12 +79,41 @@ class KaijuGame
 
   private
 
-  def create_mission
+  def create_mission(game_state)
+    kaiju = Kaiju.new
+    location = Location.new
+
+    # Let player choose which squad to deploy
+    selected_squad = game_state.show_squad_selection(kaiju)
+
+    return nil unless selected_squad # Player cancelled
+
     {
-      kaiju: Kaiju.new,
-      location: Location.new,
-      squad: Squad.new
+      kaiju: kaiju,
+      location: location,
+      squad: selected_squad
     }
+  end
+
+  def count_casualties(squad)
+    squad.soldiers.count { |s| s.status == :kia }
+  end
+
+  def handle_recruitment(squad, game_state, casualties)
+    if casualties > 0
+      puts "\n" + "=" * 60
+      puts "📋 RECRUITMENT PHASE"
+      puts "=" * 60
+      puts "💀 #{casualties} soldier(s) lost in action"
+      puts "🔍 High Command is sending replacement personnel..."
+      puts
+
+      game_state.add_recruits_to_squad(squad, casualties)
+
+      puts "\n📊 #{squad.name} now has #{squad.soldiers.count} active soldiers"
+      puts "Press Enter to continue..."
+      gets
+    end
   end
 
   def show_threat(mission)
@@ -91,19 +140,42 @@ class KaijuGame
     gets.chomp == "1"
   end
 
-  def conduct_mission(mission)
+  def conduct_mission(mission, game_state)
     kaiju, squad = mission[:kaiju], mission[:squad]
 
-    show_squad(squad)
-
-    puts "\nPress Enter to begin the battle..."
+    puts "\n🎯 Deploying #{squad.name}..."
+    puts "Press Enter to begin the battle..."
     gets
 
-    show_rich_battle(squad, kaiju)
+    result = show_rich_battle(squad, kaiju)
+
+    # Count casualties BEFORE removing them
+    casualties = count_casualties(squad)
+
+    # Reset soldier status for next mission (except for dead soldiers)
+    squad.soldiers.each do |soldier|
+      if soldier.status != :kia
+        soldier.status = :alive
+        soldier.success = false
+      end
+    end
+
+    # Remove dead soldiers from the squad
+    initial_count = squad.soldiers.count
+    squad.soldiers.reject! { |soldier| soldier.status == :kia }
+    removed_count = initial_count - squad.soldiers.count
+
+    if removed_count > 0
+      puts "\n💀 #{removed_count} soldier(s) will be remembered as heroes..."
+      puts "   #{squad.name} continues with #{squad.soldiers.count} remaining members."
+    end
+
+    # Return both result and casualties
+    { success: result, casualties: casualties }
   end
 
-  def show_squad(squad)
-    squad.show_squad_details
+  def show_squad(squad, kaiju = nil)
+    squad.show_squad_details(kaiju)
   end
 
   def show_rich_battle(squad, kaiju)
@@ -224,11 +296,13 @@ class KaijuGame
     puts
     puts "📡 Transmission complete. Press Enter to continue..."
     gets
+
+    success
   end
 
   def play_again?
     puts "\n" + "=" * 60
-    print "Play another mission? (y/n): "
+    print "Continue to next mission? (y/n): "
     input = gets
     return false if input.nil?
     input.chomp.downcase.start_with?('y')
@@ -238,6 +312,7 @@ end
 # Run the game
 if __FILE__ == $0
   game = KaijuGame.new
-  menu = MainMenu.new(game, "KAIJU DEFENSE FORCE", "Text Adventure")
+  game_state = GameState.new
+  menu = MainMenu.new(game, game_state, "KAIJU DEFENSE FORCE", "Text Adventure")
   menu.run
 end
