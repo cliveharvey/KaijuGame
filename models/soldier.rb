@@ -1,7 +1,7 @@
 require_relative '../generators/soldier_name_generator'
 
 class Soldier
-  attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success
+  attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success, :background
 
   def initialize(name_length = nil, offense = rand(10..30), defense = rand(10..30), grit = rand(10..30), leadership = rand(10..30))
     @name = SoldierNameGenerator.generate_name
@@ -11,6 +11,7 @@ class Soldier
     @leadership = leadership
     @status = :alive
     @success = false
+    @background = nil  # Will be set for recruits
   end
 
   def combat(difficulty)

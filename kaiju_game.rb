@@ -6,6 +6,7 @@ require_relative 'models/kaiju'
 require_relative 'models/location'
 require_relative 'main_menu'
 require_relative 'game_state'
+require_relative 'utils/arrow_menu'
 require 'ostruct'
 
 class KaijuGame
@@ -22,16 +23,20 @@ class KaijuGame
 
   def show_game_specific_instructions
     puts "⭐ ENHANCED FEATURES:"
-    puts "   • Detailed battle narratives with rich descriptions"
-    puts "   • Individual soldier combat stories"
-    puts "   • Immersive text and atmospheric presentation"
+    puts "   • Dual squad management with unique generated names"
+    puts "   • 4-skill soldier system (Offense, Defense, Grit, Leadership)"
+    puts "   • Dynamic risk assessment against specific kaiju threats"
+    puts "   • Veterans earn nicknames and callsigns automatically"
+    puts "   • Mission persistence - save and resume anytime"
+    puts "   • City destruction consequences for rejected missions"
   end
 
   def show_game_specific_about
     puts "   • Enhanced storytelling with atmospheric descriptions"
-    puts "   • Experience epic battles through rich narratives"
-    puts
-    puts "⭐ Features detailed battle descriptions and immersive storytelling!"
+    puts "   • Sophisticated kaiju and soldier name generation"
+    puts "   • Progressive battle reporting with dramatic timing"
+    puts "   • Arrow key navigation for classic console feel"
+    puts "   • Comprehensive campaign tracking and statistics"
   end
 
   def play(game_state)
@@ -57,14 +62,14 @@ class KaijuGame
         game_state.set_pending_mission(kaiju, location)
       end
 
-      # Show current mission
-      mission_choice = show_mission_briefing(game_state.pending_mission)
+      # Show current mission using arrow menu
+      mission_choice = show_mission_briefing_with_menu(game_state.pending_mission)
 
       case mission_choice
-      when :accept
+      when 1 # Accept
         # Accept mission - proceed to squad selection
         clear_screen
-        selected_squad = game_state.show_squad_selection_for_mission(game_state.pending_mission)
+        selected_squad = show_squad_selection_with_menu(game_state.pending_mission, game_state)
 
         if selected_squad
           # Conduct the mission
@@ -75,7 +80,7 @@ class KaijuGame
           game_state.save_game
 
           # Ask if player wants to continue
-          unless continue_operations?
+          unless continue_operations_with_menu?
             break
           end
         else
@@ -84,13 +89,13 @@ class KaijuGame
           game_state.save_game
         end
 
-      when :reject
+      when 2 # Reject
         # Reject mission - show destruction and generate new mission
         show_mission_rejection_consequences(game_state.pending_mission, game_state)
         game_state.clear_pending_mission
         game_state.save_game
 
-      when :main_menu
+      when 3 # Main menu
         # Return to main menu - save current state including pending mission
         game_state.save_game
         puts "\n🏠 Returning to main menu..."
@@ -117,12 +122,12 @@ class KaijuGame
     end
   end
 
-  def show_mission_briefing(pending_mission)
-    clear_screen
-
+  def show_mission_briefing_with_menu(pending_mission)
     kaiju_data = pending_mission[:kaiju]
     location_data = pending_mission[:location]
 
+    # Show detailed kaiju info first
+    clear_screen
     puts "🚨 KAIJU ALERT! 🚨"
     puts "=" * 60
     puts "📍 Target Location: #{location_data[:city]}"
@@ -134,31 +139,59 @@ class KaijuGame
     puts "⚠️  Threat Level: #{kaiju_data[:difficulty]}"
     puts "=" * 60
     puts
-    puts "🤔 COMMAND DECISION REQUIRED"
-    puts
-    puts "What are your orders, Commander?"
-    puts
-    puts "1. ✅ Accept Mission - Deploy forces to engage"
-    puts "2. ❌ Reject Mission - Stay at base (city will be attacked)"
-    puts "3. 🏠 Return to Main Menu - Save and exit"
-    print "Enter your choice (1-3): "
 
-    choice = gets.chomp
+    # Use arrow menu for choices
+    menu = MissionMenu.new(kaiju_data[:name_english], location_data[:city], kaiju_data[:difficulty])
+    menu.show
+  end
+
+  def show_squad_selection_with_menu(pending_mission, game_state)
+    kaiju_data = pending_mission[:kaiju]
+    location_data = pending_mission[:location]
+
+    # Create temporary kaiju object for risk assessment
+    temp_kaiju = OpenStruct.new(kaiju_data)
+
+    # Show detailed squad information with risk assessment first
     clear_screen
+    puts "\n" + "=" * 60
+    puts "📋 SQUAD DEPLOYMENT ANALYSIS"
+    puts "=" * 60
+    puts "🎯 Mission: Engage #{kaiju_data[:name_english]} at #{location_data[:city]}"
+    puts "⚠️  Threat Level: #{kaiju_data[:difficulty]} | Type: #{kaiju_data[:size].capitalize} #{kaiju_data[:creature]}"
+    puts
 
-    case choice
-    when "1"
-      :accept
-    when "2"
-      :reject
-    when "3"
-      :main_menu
-    else
-      puts "❌ Invalid choice! Please try again."
-      puts "Press Enter to continue..."
-      gets
-      show_mission_briefing(pending_mission)
+    squads = game_state.get_squads
+    squads.each_with_index do |squad, index|
+      puts "#{index + 1}. #{squad.name.upcase}"
+      squad.show_squad_details(temp_kaiju)
+      puts
     end
+
+    puts "Press Enter to continue to deployment selection..."
+    gets
+
+    # Now show the menu for selection
+    menu = SquadMenu.new(squads, kaiju_data[:name_english], location_data[:city])
+    choice = menu.show
+
+    if choice && choice <= squads.length
+      squads[choice - 1]
+    else
+      nil # Cancelled
+    end
+  end
+
+  def continue_operations_with_menu?
+    options = [
+      "✅ Continue - Await next mission",
+      "🏠 Return to Base - End operations"
+    ]
+
+    menu = ArrowMenu.new(options, "🎯 MISSION COMMAND", "Do you want to continue operations?")
+    choice = menu.show
+
+    choice == 1
   end
 
   def show_mission_rejection_consequences(pending_mission, game_state)
@@ -238,21 +271,6 @@ class KaijuGame
 
     # Return result
     { success: result, casualties: casualties }
-  end
-
-  def continue_operations?
-    puts "\n" + "=" * 60
-    puts "🎯 MISSION COMMAND"
-    puts "=" * 60
-    puts "Do you want to continue operations?"
-    puts
-    puts "1. ✅ Continue - Await next mission"
-    puts "2. 🏠 Return to Base - End operations"
-    print "Enter your choice (1 or 2): "
-
-    choice = gets.chomp
-    clear_screen
-    choice == "1"
   end
 
   def count_casualties(squad)
@@ -423,8 +441,6 @@ end
 
 # Run the game
 if __FILE__ == $0
-  game = KaijuGame.new
-  game_state = GameState.new
-  menu = MainMenu.new(game, game_state, "KAIJU DEFENSE FORCE", "Text Adventure")
+  menu = MainMenu.new
   menu.run
 end

@@ -97,14 +97,23 @@ class GameState
     @soldiers_lost += casualties
   end
 
-  def add_recruits_to_squad(squad, count)
+    def add_recruits_to_squad(squad, count)
     return if count <= 0
 
     count.times do
       recruit = create_recruit
+      # Show recruitment with profession
+      recruit_name_with_profession = recruit.name
+      puts "📝 #{recruit_name_with_profession} has been recruited to #{squad.name}"
+
+      # Extract and store background separately
+      recruit.background = extract_background_from_name(recruit.name)
+
+      # Clean up name by removing profession for normal display
+      recruit.name = clean_recruit_name(recruit.name)
+
       squad.soldiers << recruit
       @recruits_added += 1
-      puts "📝 #{recruit.name} has been recruited to #{squad.name}"
     end
   end
 
@@ -322,6 +331,17 @@ class GameState
 
   private
 
+  def clean_recruit_name(name_with_profession)
+    # Remove profession from recruit names like "John Smith (Demolitions Expert)" -> "John Smith"
+    name_with_profession.gsub(/\s*\([^)]+\)$/, '')
+  end
+
+  def extract_background_from_name(name_with_profession)
+    # Extract profession from recruit names like "John Smith (Demolitions Expert)" -> "Demolitions Expert"
+    match = name_with_profession.match(/\(([^)]+)\)$/)
+    match ? match[1] : nil
+  end
+
   def create_recruit
     # Create a medium-low skill recruit (12-20 range instead of 10-30)
     recruit = Soldier.new(
@@ -350,7 +370,8 @@ class GameState
           grit: soldier.grit,
           leadership: soldier.leadership,
           status: soldier.status,
-          success: soldier.success
+          success: soldier.success,
+          background: soldier.background
         }
       end
     }
@@ -376,6 +397,7 @@ class GameState
       soldier.name = soldier_data['name']
       soldier.status = soldier_data['status'].to_sym
       soldier.success = soldier_data['success']
+      soldier.background = soldier_data['background']
 
       squad.soldiers << soldier
     end
