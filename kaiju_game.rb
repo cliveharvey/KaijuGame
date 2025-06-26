@@ -6,12 +6,13 @@ require_relative 'models/kaiju'
 require_relative 'models/location'
 require_relative 'main_menu'
 require_relative 'game_state'
+require 'ostruct'
 
 class KaijuGame
   STATUS_ICONS = {
     alive: "✅",
-    shaken: "⚡",
-    injured: "🩹",
+    injured: "🤕",
+    shaken: "😰",
     kia: "💀"
   }.freeze
 
@@ -34,7 +35,8 @@ class KaijuGame
   end
 
   def play(game_state)
-    system('clear') || system('cls')
+    clear_screen
+
     puts "╔════════════════════════════════════════════════════════╗"
     puts "║                   MISSION BRIEFING                     ║"
     puts "╚════════════════════════════════════════════════════════╝"
@@ -42,112 +44,167 @@ class KaijuGame
 
     # Show campaign status
     game_state.show_campaign_stats
-    puts "\nPress Enter to continue to mission selection..."
+    puts "\nPress Enter to continue to mission operations..."
     gets
+    clear_screen
 
+    # Main mission loop
     loop do
-      mission = create_mission(game_state)
-      break unless mission # Player cancelled
-
-      show_threat(mission)
-
-      if deploy_decision?
-        result = conduct_mission(mission, game_state)
-
-        # Record mission results
-        casualties = result[:casualties]
-        game_state.record_mission_result(result[:success], result[:success], casualties)
-
-        # Handle recruitment for KIA replacements
-        handle_recruitment(mission[:squad], game_state, casualties)
-
-        # Save game after each mission
-        game_state.save_game
-      else
-        puts "\n💥 You chose to stay at base. #{mission[:location].city} falls to the kaiju..."
-        game_state.record_mission_result(false, false, 0)
-        game_state.save_game
+      # Check if there's a pending mission or generate new one
+      unless game_state.has_pending_mission?
+        kaiju = Kaiju.new
+        location = Location.new
+        game_state.set_pending_mission(kaiju, location)
       end
 
-      break unless play_again?
+      # Show current mission
+      mission_choice = show_mission_briefing(game_state.pending_mission)
+
+      case mission_choice
+      when :accept
+        # Accept mission - proceed to squad selection
+        clear_screen
+        selected_squad = game_state.show_squad_selection_for_mission(game_state.pending_mission)
+
+        if selected_squad
+          # Conduct the mission
+          result = conduct_accepted_mission(game_state.pending_mission, selected_squad, game_state)
+          game_state.clear_pending_mission
+
+          # Save after mission completion
+          game_state.save_game
+
+          # Ask if player wants to continue
+          unless continue_operations?
+            break
+          end
+        else
+          # Player cancelled squad selection, keep the mission pending
+          # Save game to preserve the mission
+          game_state.save_game
+        end
+
+      when :reject
+        # Reject mission - show destruction and generate new mission
+        show_mission_rejection_consequences(game_state.pending_mission, game_state)
+        game_state.clear_pending_mission
+        game_state.save_game
+
+      when :main_menu
+        # Return to main menu - save current state including pending mission
+        game_state.save_game
+        puts "\n🏠 Returning to main menu..."
+        puts "   Your current mission will be saved and available when you return."
+        puts "Press Enter to continue..."
+        gets
+        break
+      end
     end
 
-    puts "\n🎌 Mission series complete! Returning to main menu..."
+    puts "\n🎌 Mission operations complete! Returning to main menu..."
     puts "Press Enter to continue..."
     gets
   end
 
   private
 
-  def create_mission(game_state)
-    kaiju = Kaiju.new
-    location = Location.new
-
-    # Let player choose which squad to deploy
-    selected_squad = game_state.show_squad_selection(kaiju)
-
-    return nil unless selected_squad # Player cancelled
-
-    {
-      kaiju: kaiju,
-      location: location,
-      squad: selected_squad
-    }
-  end
-
-  def count_casualties(squad)
-    squad.soldiers.count { |s| s.status == :kia }
-  end
-
-  def handle_recruitment(squad, game_state, casualties)
-    if casualties > 0
-      puts "\n" + "=" * 60
-      puts "📋 RECRUITMENT PHASE"
-      puts "=" * 60
-      puts "💀 #{casualties} soldier(s) lost in action"
-      puts "🔍 High Command is sending replacement personnel..."
-      puts
-
-      game_state.add_recruits_to_squad(squad, casualties)
-
-      puts "\n📊 #{squad.name} now has #{squad.soldiers.count} active soldiers"
-      puts "Press Enter to continue..."
-      gets
+  def clear_screen
+    begin
+      system('clear') || system('cls')
+    rescue
+      # If screen clearing fails, just continue
+      puts "\n" * 3  # Add some space instead
     end
   end
 
-  def show_threat(mission)
-    kaiju, location = mission[:kaiju], mission[:location]
+  def show_mission_briefing(pending_mission)
+    clear_screen
+
+    kaiju_data = pending_mission[:kaiju]
+    location_data = pending_mission[:location]
 
     puts "🚨 KAIJU ALERT! 🚨"
-    puts "A terrifying kaiju has been spotted terrorizing #{location.city}!"
+    puts "=" * 60
+    puts "📍 Target Location: #{location_data[:city]}"
+    puts "🎯 Threat: \"#{kaiju_data[:name_english]}\" (#{kaiju_data[:name_monster]})"
+    puts "📊 Classification: #{kaiju_data[:size].capitalize} #{kaiju_data[:creature]}"
+    puts "🔍 Description: #{kaiju_data[:characteristic]}"
+    puts "🛡️  Armor Type: #{kaiju_data[:material]} skinned"
+    puts "⚔️  Primary Weapon: #{kaiju_data[:weapon]}"
+    puts "⚠️  Threat Level: #{kaiju_data[:difficulty]}"
+    puts "=" * 60
     puts
-    puts "Target: \"#{kaiju.name_english}\" (#{kaiju.name_monster})"
-    puts "Type: #{kaiju.size.capitalize} #{kaiju.creature}"
-    puts "Description: #{kaiju.characteristic}"
-    puts "Material: #{kaiju.material} skinned"
-    puts "Primary Weapon: #{kaiju.weapon}"
-    puts "Threat Level: #{kaiju.difficulty}"
+    puts "🤔 COMMAND DECISION REQUIRED"
     puts
+    puts "What are your orders, Commander?"
+    puts
+    puts "1. ✅ Accept Mission - Deploy forces to engage"
+    puts "2. ❌ Reject Mission - Stay at base (city will be attacked)"
+    puts "3. 🏠 Return to Main Menu - Save and exit"
+    print "Enter your choice (1-3): "
+
+    choice = gets.chomp
+    clear_screen
+
+    case choice
+    when "1"
+      :accept
+    when "2"
+      :reject
+    when "3"
+      :main_menu
+    else
+      puts "❌ Invalid choice! Please try again."
+      puts "Press Enter to continue..."
+      gets
+      show_mission_briefing(pending_mission)
+    end
   end
 
-  def deploy_decision?
-    puts "What is your decision, Commander?"
-    puts "1. Deploy troops to engage the kaiju"
-    puts "2. Stay at base (let the city fall)"
-    print "Enter your choice (1 or 2): "
+  def show_mission_rejection_consequences(pending_mission, game_state)
+    kaiju_data = pending_mission[:kaiju]
+    location_data = pending_mission[:location]
 
-    gets.chomp == "1"
+    puts "💭 MISSION REJECTED"
+    puts "=" * 60
+    puts "You have chosen to keep your forces at base."
+    puts "#{kaiju_data[:name_english]} continues its rampage unchallenged..."
+    puts
+    puts "⏰ 6 hours later..."
+    puts
+
+    # Generate destruction report
+    destruction_lines = game_state.generate_destruction_description(kaiju_data, location_data)
+    destruction_lines.each do |line|
+      puts line
+      sleep(0.8)
+    end
+
+    # Record the city destruction
+    game_state.record_city_destruction
+
+    puts
+    puts "💔 The decision weighs heavily on your conscience."
+    puts "   But your forces remain intact for the next threat."
+    puts
+    puts "Press Enter to await the next mission..."
+    gets
+    clear_screen
   end
 
-  def conduct_mission(mission, game_state)
-    kaiju, squad = mission[:kaiju], mission[:squad]
+  def conduct_accepted_mission(pending_mission, squad, game_state)
+    kaiju_data = pending_mission[:kaiju]
+    location_data = pending_mission[:location]
 
-    puts "\n🎯 Deploying #{squad.name}..."
+    puts "\n🎯 Deploying #{squad.name} to #{location_data[:city]}..."
+    puts "Target: #{kaiju_data[:name_english]}"
     puts "Press Enter to begin the battle..."
     gets
+    clear_screen
 
-    result = show_rich_battle(squad, kaiju)
+    # Create temporary kaiju object for battle (since we stored data as hash)
+    temp_kaiju = OpenStruct.new(kaiju_data)
+    result = show_rich_battle(squad, temp_kaiju)
 
     # Count casualties BEFORE removing them
     casualties = count_casualties(squad)
@@ -168,10 +225,73 @@ class KaijuGame
     if removed_count > 0
       puts "\n💀 #{removed_count} soldier(s) will be remembered as heroes..."
       puts "   #{squad.name} continues with #{squad.soldiers.count} remaining members."
+      puts "Press Enter to continue..."
+      gets
+      clear_screen
     end
 
-    # Return both result and casualties
+    # Record mission results
+    game_state.record_mission_result(result, result, casualties)
+
+    # Handle recruitment for KIA replacements
+    handle_recruitment(squad, game_state, casualties)
+
+    # Return result
     { success: result, casualties: casualties }
+  end
+
+  def continue_operations?
+    puts "\n" + "=" * 60
+    puts "🎯 MISSION COMMAND"
+    puts "=" * 60
+    puts "Do you want to continue operations?"
+    puts
+    puts "1. ✅ Continue - Await next mission"
+    puts "2. 🏠 Return to Base - End operations"
+    print "Enter your choice (1 or 2): "
+
+    choice = gets.chomp
+    clear_screen
+    choice == "1"
+  end
+
+  def count_casualties(squad)
+    squad.soldiers.count { |s| s.status == :kia }
+  end
+
+  def handle_recruitment(squad, game_state, casualties)
+    if casualties > 0
+      clear_screen  # Clear screen for recruitment
+
+      puts "\n" + "=" * 60
+      puts "📋 RECRUITMENT PHASE"
+      puts "=" * 60
+      puts "💀 #{casualties} soldier(s) lost in action"
+      puts "🔍 High Command is sending replacement personnel..."
+      puts
+
+      game_state.add_recruits_to_squad(squad, casualties)
+
+      puts "\n📊 #{squad.name} now has #{squad.soldiers.count} active soldiers"
+      puts "Press Enter to continue..."
+      gets
+      clear_screen  # Clear after input
+    end
+  end
+
+  def show_threat(mission)
+    kaiju, location = mission[:kaiju], mission[:location]
+
+    puts "🚨 KAIJU ALERT! 🚨"
+    puts "A terrifying kaiju has been spotted terrorizing #{location.city}!"
+    puts
+    puts "Target: \"#{kaiju.name_english}\" (#{kaiju.name_monster})"
+    puts "Type: #{kaiju.size.capitalize} #{kaiju.creature}"
+    puts "Description: #{kaiju.characteristic}"
+    puts "Material: #{kaiju.material} skinned"
+    puts "Primary Weapon: #{kaiju.weapon}"
+    puts "Threat Level: #{kaiju.difficulty}"
+    puts
   end
 
   def show_squad(squad, kaiju = nil)
@@ -298,14 +418,6 @@ class KaijuGame
     gets
 
     success
-  end
-
-  def play_again?
-    puts "\n" + "=" * 60
-    print "Continue to next mission? (y/n): "
-    input = gets
-    return false if input.nil?
-    input.chomp.downcase.start_with?('y')
   end
 end
 
