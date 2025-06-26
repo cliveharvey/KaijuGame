@@ -9,8 +9,8 @@ class Squad
     @soldiers = soldier_count.times.map { Soldier.new }
   end
 
-  def combat(difficulty)
-    @soldiers.each { |soldier| soldier.combat(difficulty) }
+  def combat(kaiju_or_difficulty)
+    @soldiers.each { |soldier| soldier.combat(kaiju_or_difficulty) }
     @soldiers.count(&:success) >= 3
   end
 
@@ -90,135 +90,68 @@ class Squad
   private
 
   def calculate_realistic_mission_assessment(kaiju)
-    # Simulate combat for each soldier to get realistic expectations
-    total_simulations = 100
-    total_casualties = 0
-    total_successes = 0
+    # Much more forgiving assessment for balanced kaiju
+    avg_soldier_power = @soldiers.sum(&:total_skill) / @soldiers.count.to_f
+    threat_ratio = kaiju.difficulty.to_f / avg_soldier_power
 
-    total_simulations.times do
-      casualties_this_sim = 0
-      successes_this_sim = 0
-
-      @soldiers.each do |soldier|
-        # Simulate the actual combat logic from soldier.rb
-        attack_power = soldier.offense + (soldier.leadership / 2)
-        survival_chance = soldier.defense + (soldier.grit / 2)
-
-        # Apply weakness penalties (same as actual combat)
-        total_skill = soldier.total_skill
-        weakness_penalty = 0
-
-        if total_skill < 60
-          weakness_penalty = 10
-        elsif total_skill < 70
-          weakness_penalty = 5
-        end
-
-        defensive_power = soldier.defense + soldier.grit
-        if defensive_power < 35
-          weakness_penalty += 8
-        elsif defensive_power < 45
-          weakness_penalty += 4
-        end
-
-        # Simulate combat rolls
-        attack_roll = rand(attack_power)
-        defense_roll = rand([survival_chance - weakness_penalty, 5].max)
-        adjusted_difficulty = kaiju.difficulty + (weakness_penalty / 2)
-
-        # Determine outcome using same thresholds as actual combat
-        if attack_roll <= (adjusted_difficulty - 20)
-          # Poor attack
-          if defense_roll < (adjusted_difficulty - 15)
-            casualties_this_sim += 1  # KIA
-          end
-          # Injured soldiers don't count as success
-        elsif attack_roll <= (adjusted_difficulty - 10)
-          # Decent attack
-          successes_this_sim += 1
-          if defense_roll < (adjusted_difficulty - 10)
-            casualties_this_sim += 1  # Injured but success
-          end
-        elsif attack_roll <= adjusted_difficulty
-          # Good attack
-          successes_this_sim += 1
-        else
-          # Excellent attack
-          successes_this_sim += 1
-        end
-      end
-
-      total_casualties += casualties_this_sim
-      total_successes += (successes_this_sim >= 3 ? 1 : 0)  # Mission success needs 3+ successes
+    # Estimate success chance based on threat ratio
+    if threat_ratio < 0.3
+      success_percentage = 85 + rand(10)  # 85-95%
+      avg_casualties = 0.0 + rand(0.2)   # 0-0.2
+    elsif threat_ratio < 0.5
+      success_percentage = 70 + rand(15)  # 70-85%
+      avg_casualties = 0.1 + rand(0.3)   # 0.1-0.4
+    elsif threat_ratio < 0.7
+      success_percentage = 55 + rand(15)  # 55-70%
+      avg_casualties = 0.3 + rand(0.5)   # 0.3-0.8
+    elsif threat_ratio < 1.0
+      success_percentage = 40 + rand(15)  # 40-55%
+      avg_casualties = 0.5 + rand(0.8)   # 0.5-1.3
+    else
+      success_percentage = 20 + rand(20)  # 20-40%
+      avg_casualties = 1.0 + rand(1.5)   # 1.0-2.5
     end
 
-    avg_casualties = (total_casualties.to_f / total_simulations).round(1)
-    success_percentage = (total_successes * 100 / total_simulations)
-
-    # Determine assessment level based on realistic simulation
-    if avg_casualties >= 4.0
+    # Determine assessment level based on more reasonable thresholds
+    if avg_casualties >= 2.0
       level = :suicide
-    elsif avg_casualties >= 3.0
+    elsif avg_casualties >= 1.5
       level = :desperate
-    elsif avg_casualties >= 2.0
-      level = :challenging
     elsif avg_casualties >= 1.0
+      level = :challenging
+    elsif avg_casualties >= 0.5
       level = :balanced
     else
       level = :favorable
     end
 
-    # Override to more severe if success rate is very low
-    if success_percentage < 20
+    # Adjust based on success rate
+    if success_percentage < 30
       level = :suicide
-    elsif success_percentage < 40
+    elsif success_percentage < 50 && level != :suicide
       level = :desperate
-    elsif success_percentage < 60 && level == :favorable
+    elsif success_percentage < 70 && level == :favorable
       level = :balanced
     end
 
     {
       level: level,
-      casualties: "#{avg_casualties}/#{@soldiers.count}",
-      success_chance: success_percentage
+      casualties: "#{avg_casualties.round(1)}/#{@soldiers.count}",
+      success_chance: success_percentage.round
     }
   end
 
   def calculate_kaiju_risk(soldier, kaiju)
-    # Calculate soldier's effective power
-    attack_power = soldier.offense + (soldier.leadership / 2)
-    survival_power = soldier.defense + (soldier.grit / 2)
+    # Much more forgiving risk calculation for balanced kaiju
+    soldier_power = soldier.total_skill
+    threat_ratio = kaiju.difficulty.to_f / soldier_power
 
-    # Apply weakness penalties (same as combat system)
-    total_skill = soldier.total_skill
-    weakness_penalty = 0
-
-    if total_skill < 60
-      weakness_penalty = 10
-    elsif total_skill < 70
-      weakness_penalty = 5
-    end
-
-    defensive_power = soldier.defense + soldier.grit
-    if defensive_power < 35
-      weakness_penalty += 8
-    elsif defensive_power < 45
-      weakness_penalty += 4
-    end
-
-    adjusted_survival = [survival_power - weakness_penalty, 5].max
-    adjusted_difficulty = kaiju.difficulty + (weakness_penalty / 2)
-
-    # Calculate survival probability for poor attacks (most dangerous scenario)
-    survival_threshold = adjusted_difficulty - 15
-    survival_probability = (adjusted_survival - survival_threshold).to_f / adjusted_survival
-
-    # Determine risk level based on survival probability
-    if survival_probability < 0.3
+    # More reasonable risk thresholds
+    if threat_ratio > 0.8
       "Critical"
-    elsif survival_probability < 0.5
+    elsif threat_ratio > 0.6
       "High"
-    elsif survival_probability < 0.7
+    elsif threat_ratio > 0.4
       "Moderate"
     else
       "Low"

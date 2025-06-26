@@ -57,7 +57,9 @@ class KaijuGame
     loop do
       # Check if there's a pending mission or generate new one
       unless game_state.has_pending_mission?
-        kaiju = Kaiju.new
+        # Generate balanced kaiju based on average of both squads
+        squads = game_state.get_squads
+        kaiju = Kaiju.new(squads)  # Balanced generation from start
         location = Location.new
         game_state.set_pending_mission(kaiju, location)
       end
@@ -71,8 +73,8 @@ class KaijuGame
         clear_screen
         selected_squad = show_squad_selection_with_menu(game_state.pending_mission, game_state)
 
-        if selected_squad
-          # Conduct the mission
+                if selected_squad
+          # Conduct the mission with already balanced kaiju
           result = conduct_accepted_mission(game_state.pending_mission, selected_squad, game_state)
           game_state.clear_pending_mission
 
@@ -137,6 +139,7 @@ class KaijuGame
     puts "🛡️  Armor Type: #{kaiju_data[:material]} skinned"
     puts "⚔️  Primary Weapon: #{kaiju_data[:weapon]}"
     puts "⚠️  Threat Level: #{kaiju_data[:difficulty]}"
+    puts "📈 Combat Stats: ATK:#{kaiju_data[:offense]} DEF:#{kaiju_data[:defense]} SPD:#{kaiju_data[:speed]} SPC:#{kaiju_data[:special]}"
     puts "=" * 60
     puts
 

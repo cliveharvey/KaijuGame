@@ -255,7 +255,11 @@ class GameState
         characteristic: kaiju.characteristic,
         material: kaiju.material,
         weapon: kaiju.weapon,
-        difficulty: kaiju.difficulty
+        difficulty: kaiju.difficulty,
+        offense: kaiju.offense,
+        defense: kaiju.defense,
+        speed: kaiju.speed,
+        special: kaiju.special
       },
       location: {
         city: location.city
@@ -417,7 +421,11 @@ class GameState
         characteristic: mission[:kaiju][:characteristic],
         material: mission[:kaiju][:material],
         weapon: mission[:kaiju][:weapon],
-        difficulty: mission[:kaiju][:difficulty]
+        difficulty: mission[:kaiju][:difficulty],
+        offense: mission[:kaiju][:offense],
+        defense: mission[:kaiju][:defense],
+        speed: mission[:kaiju][:speed],
+        special: mission[:kaiju][:special]
       },
       location: {
         city: mission[:location][:city]
@@ -437,7 +445,11 @@ class GameState
         characteristic: mission_data['kaiju']['characteristic'],
         material: mission_data['kaiju']['material'],
         weapon: mission_data['kaiju']['weapon'],
-        difficulty: mission_data['kaiju']['difficulty']
+        difficulty: mission_data['kaiju']['difficulty'],
+        offense: mission_data['kaiju']['offense'] || 0,
+        defense: mission_data['kaiju']['defense'] || 0,
+        speed: mission_data['kaiju']['speed'] || 0,
+        special: mission_data['kaiju']['special'] || 0
       },
       location: {
         city: mission_data['location']['city']
