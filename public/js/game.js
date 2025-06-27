@@ -93,9 +93,12 @@ class KaijuGame {
             // Show rejection consequences
             this.showNotification('Mission Rejected', 'The city has been destroyed...', 'danger');
 
-            // Generate new mission after delay
-            setTimeout(() => {
-                this.generateNewMission();
+            // Generate new mission after delay and ensure proper display
+            setTimeout(async () => {
+                await this.generateNewMission();
+                // Force refresh the mission display
+                this.displayMission();
+                this.showPanel('mission');
             }, 3000);
         } catch (error) {
             console.error('Failed to reject mission:', error);
@@ -164,11 +167,35 @@ class KaijuGame {
             squadCard.className = 'squad-card';
             squadCard.setAttribute('data-squad-id', squad.id);
 
+            // Build threat assessment display
+            let threatAssessmentHTML = '';
+            if (squad.threat_assessment) {
+                const risk = squad.threat_assessment.casualty_risk;
+                const riskClass = risk.toLowerCase();
+                threatAssessmentHTML = `
+                    <div class="threat-assessment">
+                        <div class="risk-indicator ${riskClass}">
+                            <span class="risk-label">Casualty Risk:</span>
+                            <span class="risk-value">${risk}</span>
+                        </div>
+                        <div class="squad-metrics">
+                            <span class="metric">ATK: ${squad.threat_assessment.total_offense}</span>
+                            <span class="metric">DEF: ${squad.threat_assessment.total_defense}</span>
+                            <span class="metric">AVG: ${Math.round(squad.threat_assessment.avg_skill)}</span>
+                        </div>
+                        <div class="tactical-note">
+                            ${this.getTacticalNote(squad.threat_assessment)}
+                        </div>
+                    </div>
+                `;
+            }
+
             squadCard.innerHTML = `
                 <div class="squad-header">
                     <h3 class="squad-name">${squad.name}</h3>
                     <span class="squad-size">${squad.soldiers.length} soldiers</span>
                 </div>
+                ${threatAssessmentHTML}
                 <div class="soldiers-grid">
                     ${squad.soldiers.map(soldier => `
                         <div class="soldier-row">
@@ -221,10 +248,10 @@ class KaijuGame {
             <div class="soldier-reports">
                 <h4>🎬 Combat Reports</h4>
                 ${battleData.soldier_reports.map((report, index) => `
-                    <div class="soldier-report ${report.status}" style="animation-delay: ${index * 0.2}s">
+                    <div class="soldier-report ${report.status}" style="animation-delay: ${index * 0.8}s">
                         <h5>🪖 ${report.name} (Level ${report.pre_battle_stats.level})</h5>
                         <div class="battle-narrative">
-                            ${report.battle_narrative.map(line => `<p class="narrative-line">${line}</p>`).join('')}
+                            ${report.battle_narrative.map((line, lineIndex) => `<p class="narrative-line" style="animation-delay: ${(index * 0.8) + (lineIndex * 0.3)}s">${line}</p>`).join('')}
                         </div>
                     </div>
                 `).join('')}
@@ -270,7 +297,27 @@ class KaijuGame {
             casualtiesHTML += '</div>';
         }
 
-        if (battleData.casualties === 0 && Object.keys(battleData.promotion_details).length === 0) {
+        if (battleData.recruitment_details && battleData.recruitment_details.length > 0) {
+            casualtiesHTML += '<div class="recruitment"><h5>📋 New Recruits</h5>';
+            casualtiesHTML += '<p>High Command has dispatched replacement personnel:</p>';
+            battleData.recruitment_details.forEach(recruit => {
+                casualtiesHTML += `
+                    <div class="recruit-detail">
+                        <h6>🆕 ${recruit.name}</h6>
+                        <p><em>Background: ${recruit.background}</em></p>
+                        <div class="recruit-stats">
+                            <span>ATK: ${recruit.stats.offense}</span>
+                            <span>DEF: ${recruit.stats.defense}</span>
+                            <span>GRT: ${recruit.stats.grit}</span>
+                            <span>LDR: ${recruit.stats.leadership}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            casualtiesHTML += '</div>';
+        }
+
+        if (battleData.casualties === 0 && Object.keys(battleData.promotion_details).length === 0 && (!battleData.recruitment_details || battleData.recruitment_details.length === 0)) {
             casualtiesHTML += '<p>All soldiers survived without major casualties or promotions this mission.</p>';
         }
 
@@ -353,6 +400,22 @@ class KaijuGame {
         }
 
         return await response.json();
+    }
+
+    getTacticalNote(assessment) {
+        const risk = assessment.casualty_risk;
+        const kaijuDiff = assessment.kaiju_difficulty;
+        const avgSkill = assessment.avg_skill;
+
+        if (risk === 'Low') {
+            return "✅ Squad is well-equipped for this threat level";
+        } else if (risk === 'Moderate') {
+            return "⚠️ Expect some casualties but mission should succeed";
+        } else if (risk === 'High') {
+            return "🔥 Dangerous mission - significant losses expected";
+        } else {
+            return "💀 EXTREME DANGER - Squad may be overwhelmed";
+        }
     }
 }
 

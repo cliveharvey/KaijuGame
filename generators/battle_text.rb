@@ -198,7 +198,6 @@ class BattleText
     end
 
     intro_texts << "🚨 Threat Analysis: #{kaiju.size.capitalize} #{kaiju.creature} poses a #{threat_level}"
-    intro_texts << "💥 Estimated Casualty Risk: #{estimate_casualty_risk(squad, kaiju)}"
 
     intro_texts
   end
@@ -229,14 +228,19 @@ class BattleText
   end
 
   def estimate_casualty_risk(squad, kaiju)
+    # Calculate squad strength more accurately
     avg_power = squad.soldiers.sum { |s| s.offense + s.defense + s.grit + s.leadership } / squad.soldiers.count
-    threat_ratio = kaiju.difficulty.to_f / avg_power
 
-    if threat_ratio < 0.7
+    # Adjust the threat calculation to be more realistic
+    # Kaiju difficulty is typically 15-60, soldier total stats are typically 50-100
+    # So we need to scale this better
+    threat_ratio = (kaiju.difficulty * 2.5).to_f / avg_power
+
+    if threat_ratio < 0.8
       "Low"
-    elsif threat_ratio < 1.2
+    elsif threat_ratio < 1.3
       "Moderate"
-    elsif threat_ratio < 1.8
+    elsif threat_ratio < 2.0
       "High"
     else
       "Critical"

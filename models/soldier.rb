@@ -111,21 +111,25 @@ class Soldier
     # Special abilities create additional challenges
     special_penalty = kaiju_special / 4
 
-    # Much more forgiving weakness penalties
+    # Balanced weakness penalties - weak soldiers face higher risk
     total_skill = @offense + @defense + @grit + @leadership
     weakness_penalty = 0
 
     if total_skill < 50
-      weakness_penalty = 6
+      weakness_penalty = 6  # Weak soldiers are at higher risk
     elsif total_skill < 60
-      weakness_penalty = 3
+      weakness_penalty = 4
+    elsif total_skill < 70
+      weakness_penalty = 2
     end
 
     defensive_power = @defense + @grit
     if defensive_power < 25
-      weakness_penalty += 4
+      weakness_penalty += 5  # Poor defensive stats are dangerous
     elsif defensive_power < 35
-      weakness_penalty += 2
+      weakness_penalty += 3
+    elsif defensive_power < 45
+      weakness_penalty += 1
     end
 
     # Combat rolls with kaiju stats
@@ -145,22 +149,30 @@ class Soldier
       experience_gain = kaiju.difficulty / 4
     end
 
-    # Determine survival based on kaiju's attack vs soldier's defense (much more forgiving)
-    kaiju_damage_roll = rand(kaiju_attack_power + special_penalty)
-    survival_threshold = defense_roll + (@grit / 2)  # Grit helps more with survival
+    # Determine survival based on kaiju's attack vs soldier's defense (more realistic danger)
+    kaiju_damage_roll = rand((kaiju_attack_power + special_penalty) / 2..(kaiju_attack_power + special_penalty + 10))
+    survival_threshold = defense_roll + (@grit / 3) - weakness_penalty  # Weakness affects survival
 
-    if kaiju_damage_roll > survival_threshold + 25
+            # Balanced thresholds based on kaiju difficulty
+    danger_modifier = kaiju.difficulty / 20  # More gradual scaling
+    chaos_factor = rand(-2..2)  # Less random chaos
+
+    kia_threshold = survival_threshold + (15 - danger_modifier) + chaos_factor
+    injured_threshold = survival_threshold + (10 - danger_modifier) + chaos_factor
+    shaken_threshold = survival_threshold + (6 - danger_modifier) + chaos_factor
+
+    if kaiju_damage_roll > kia_threshold
       @status = :kia
       @success = false  # Dead soldiers can't contribute
-    elsif kaiju_damage_roll > survival_threshold + 15
+    elsif kaiju_damage_roll > injured_threshold
       @status = :injured
       gain_experience(experience_gain)
-    elsif kaiju_damage_roll > survival_threshold + 8
+    elsif kaiju_damage_roll > shaken_threshold
       @status = :shaken
       gain_experience(experience_gain)
     else
       # Survived unharmed - bonus XP for clean performance
-      gain_experience(experience_gain + 5)
+      gain_experience(experience_gain + 3)
     end
 
     @success

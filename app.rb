@@ -2,6 +2,7 @@ require 'sinatra'
 require 'sinatra/json'
 require 'json'
 require 'ostruct'
+require 'securerandom'
 require_relative 'game_state'
 require_relative 'models/kaiju'
 require_relative 'models/location'
@@ -10,8 +11,10 @@ require_relative 'systems/battle_system'
 
 class WebKaijuGame < Sinatra::Base
   # Enable sessions for game state persistence
+  # Use environment variable for session secret, generate one if not set
+  session_secret = ENV['SESSION_SECRET'] || SecureRandom.hex(32)
   use Rack::Session::Cookie, :key => 'rack.session',
-                             :secret => '0d4e99c3fe1c9589ac5fe8795f92004cda42b933b06d265b176b22c3d2764820'
+                             :secret => session_secret
 
   # Serve static files
   set :public_folder, 'public'
@@ -62,11 +65,20 @@ class WebKaijuGame < Sinatra::Base
     end
   end
 
-  # Get squads info
+  # Get available squads for mission
   get '/api/squads' do
     game_state = GameState.from_hash(session[:game_state])
-    squads_data = game_state.get_squads.map.with_index do |squad, index|
-      {
+    squads = game_state.get_squads
+
+    # Get current mission for threat assessment
+    pending_mission = game_state.pending_mission
+    kaiju_data = pending_mission[:kaiju] if pending_mission
+
+    # Create battle text generator for risk assessment
+    battle_text = BattleText.new
+
+    squads_data = squads.map.with_index do |squad, index|
+      squad_info = {
         id: index,
         name: squad.name,
         soldiers: squad.soldiers.map do |soldier|
@@ -82,6 +94,29 @@ class WebKaijuGame < Sinatra::Base
           }
         end
       }
+
+      # Add casualty risk assessment if there's a pending mission
+      if kaiju_data
+        temp_kaiju = OpenStruct.new(kaiju_data)
+        casualty_risk = battle_text.send(:estimate_casualty_risk, squad, temp_kaiju)
+
+        # Calculate squad strength metrics
+        total_offense = squad.soldiers.sum(&:offense)
+        total_defense = squad.soldiers.sum(&:defense)
+        avg_leadership = squad.soldiers.sum(&:leadership) / squad.soldiers.count
+        avg_skill = squad.soldiers.sum(&:total_skill) / squad.soldiers.count
+
+        squad_info[:threat_assessment] = {
+          casualty_risk: casualty_risk,
+          total_offense: total_offense,
+          total_defense: total_defense,
+          avg_leadership: avg_leadership,
+          avg_skill: avg_skill,
+          kaiju_difficulty: kaiju_data[:difficulty]
+        }
+      end
+
+      squad_info
     end
 
     json({ squads: squads_data })
@@ -204,11 +239,36 @@ class WebKaijuGame < Sinatra::Base
       ]
     end
 
-    # Count casualties before removing dead soldiers
+        # Count casualties before removing dead soldiers
     casualty_list = selected_squad.soldiers.select { |s| s.status == :kia }.map(&:name)
 
     # Remove dead soldiers
     selected_squad.soldiers.reject! { |soldier| soldier.status == :kia }
+
+    # Auto-recruit replacements for casualties
+    recruitment_details = []
+    if casualties > 0
+      casualties.times do
+        recruit = game_state.create_recruit
+        recruit.background = game_state.extract_background_from_name(recruit.name)
+        recruit_name_with_profession = recruit.name
+        recruit.name = game_state.clean_recruit_name(recruit.name)
+
+        selected_squad.soldiers << recruit
+        recruitment_details << {
+          name: recruit.name,
+          background: recruit.background,
+          stats: {
+            level: recruit.level,
+            offense: recruit.offense,
+            defense: recruit.defense,
+            grit: recruit.grit,
+            leadership: recruit.leadership
+          }
+        }
+      end
+      game_state.instance_variable_set(:@recruits_added, game_state.instance_variable_get(:@recruits_added) + casualties)
+    end
 
     # Record mission results
     game_state.record_mission_result(success, success, casualties)
@@ -224,6 +284,7 @@ class WebKaijuGame < Sinatra::Base
       casualty_list: casualty_list,
       level_ups: level_ups,
       promotion_details: promotion_details,
+      recruitment_details: recruitment_details,
       battle_intro: battle_intro,
       soldier_reports: soldier_reports,
       mission_outcome: mission_outcome,

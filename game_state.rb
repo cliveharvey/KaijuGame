@@ -385,6 +385,32 @@ class GameState
     @cities_destroyed
   end
 
+  def create_recruit
+    # Create a medium-low skill recruit (12-20 range instead of 10-30)
+    recruit = Soldier.new(
+      nil,                  # name will be generated in Soldier class
+      rand(12..20),         # offense
+      rand(12..20),         # defense
+      rand(12..20),         # grit
+      rand(12..20)          # leadership
+    )
+
+    # Override with specialized recruit name that includes background
+    recruit.name = SoldierNameGenerator.generate_recruit_name
+    recruit
+  end
+
+  def clean_recruit_name(name_with_profession)
+    # Remove profession from recruit names like "John Smith (Demolitions Expert)" -> "John Smith"
+    name_with_profession.gsub(/\s*\([^)]+\)$/, '')
+  end
+
+  def extract_background_from_name(name_with_profession)
+    # Extract profession from recruit names like "John Smith (Demolitions Expert)" -> "Demolitions Expert"
+    match = name_with_profession.match(/\(([^)]+)\)$/)
+    match ? match[1] : nil
+  end
+
   def serialize_squad(squad)
     return nil unless squad
 
@@ -491,32 +517,6 @@ class GameState
   end
 
   private
-
-  def clean_recruit_name(name_with_profession)
-    # Remove profession from recruit names like "John Smith (Demolitions Expert)" -> "John Smith"
-    name_with_profession.gsub(/\s*\([^)]+\)$/, '')
-  end
-
-  def extract_background_from_name(name_with_profession)
-    # Extract profession from recruit names like "John Smith (Demolitions Expert)" -> "Demolitions Expert"
-    match = name_with_profession.match(/\(([^)]+)\)$/)
-    match ? match[1] : nil
-  end
-
-  def create_recruit
-    # Create a medium-low skill recruit (12-20 range instead of 10-30)
-    recruit = Soldier.new(
-      nil,                  # name will be generated in Soldier class
-      rand(12..20),         # offense
-      rand(12..20),         # defense
-      rand(12..20),         # grit
-      rand(12..20)          # leadership
-    )
-
-    # Override with specialized recruit name that includes background
-    recruit.name = SoldierNameGenerator.generate_recruit_name
-    recruit
-  end
 
   def clear_screen
     begin
