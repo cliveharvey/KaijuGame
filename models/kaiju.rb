@@ -45,6 +45,39 @@ class Kaiju
     "ATK:#{@offense} DEF:#{@defense} SPD:#{@speed} SPC:#{@special}"
   end
 
+  def trait_summary
+    "#{@size.capitalize} #{@creature} with #{@material} skin, #{@characteristic}, armed with #{@weapon}"
+  end
+
+  def detailed_trait_description
+    description = []
+    description << "🦖 **PHYSICAL FORM**: #{@size.capitalize} #{@creature}"
+    description << "🛡️  **SKIN/ARMOR**: #{@material.capitalize} composition"
+    description << "👁️  **NOTABLE FEATURES**: #{@characteristic.capitalize}"
+    description << "⚔️  **PRIMARY WEAPON**: #{@weapon.capitalize}"
+    description << "🎯 **COMBAT TRAITS**: #{combat_style_description}"
+    description
+  end
+
+  def combat_style_description
+    # Determine combat style based on stats
+    if @offense > @defense && @offense > @speed
+      if @weapon.include?('claw') || @weapon.include?('jaw') || @weapon.include?('fist')
+        "Aggressive melee combatant"
+      else
+        "Heavy assault specialist"
+      end
+    elsif @defense > @offense && @defense > @speed
+      "Defensive tank - tough to bring down"
+    elsif @speed > @offense && @speed > @defense
+      "Hit-and-run tactics - strikes fast"
+    elsif @special > 25
+      "Supernatural abilities - unpredictable"
+    else
+      "Balanced fighter - adaptable to situations"
+    end
+  end
+
   def show_detailed_stats
     puts "📊 KAIJU COMBAT ANALYSIS:"
     puts "   Offensive Power: #{@offense} #{offense_description}"
@@ -52,6 +85,35 @@ class Kaiju
     puts "   Speed Factor: #{@speed} #{speed_description}"
     puts "   Special Ability: #{@special} #{special_description}"
     puts "   Overall Threat: #{@difficulty}"
+    puts
+    puts "🔍 DETAILED TRAITS:"
+    detailed_trait_description.each { |trait| puts "   #{trait}" }
+  end
+
+  def show_full_trait_profile
+    puts "=" * 60
+    puts "🦖 KAIJU TRAIT PROFILE: #{@name_english}"
+    puts "=" * 60
+    puts "📛 Designation: #{@name_monster}"
+    puts
+    puts "🏗️  PHYSICAL CHARACTERISTICS:"
+    puts "   Size Classification: #{@size.capitalize} (#{get_size_description})"
+    puts "   Base Creature Type: #{@creature.capitalize}"
+    puts "   Skin/Armor Composition: #{get_material_description}"
+    puts "   Distinctive Features: #{@characteristic.capitalize}"
+    puts
+    puts "⚔️  COMBAT CAPABILITIES:"
+    puts "   Primary Weapon System: #{get_weapon_description}"
+    puts "   Combat Style: #{combat_style_description}"
+    puts "   Threat Assessment: #{get_threat_assessment}"
+    puts
+    puts "📊 STATISTICAL BREAKDOWN:"
+    puts "   ATK: #{@offense}/50 (#{offense_description})"
+    puts "   DEF: #{@defense}/50 (#{defense_description})"
+    puts "   SPD: #{@speed}/50 (#{speed_description})"
+    puts "   SPC: #{@special}/50 (#{special_description})"
+    puts "   Overall Difficulty: #{@difficulty}"
+    puts "=" * 60
   end
 
   private
@@ -271,6 +333,60 @@ class Kaiju
     when 21..28 then "Supernatural"
     when 29..36 then "Reality-Bending"
     else "Cosmic Horror"
+    end
+  end
+
+  def get_size_description
+    case @size
+    when :small then "Building-sized, highly mobile"
+    when :medium then "City block scale, balanced threat"
+    when :large then "Multiple city blocks, major threat"
+    when :huge then "District-wide destruction potential"
+    when :massive then "City-wide catastrophic threat"
+    when :gigantic then "Regional disaster, maximum threat level"
+    end
+  end
+
+  def get_material_description
+    material_type = MATERIALS.find { |type, materials| materials.include?(@material) }&.first
+    case material_type
+    when :flesh
+      "#{@material.capitalize} organic tissue with natural defensive properties"
+    when :rock
+      "#{@material.capitalize} stone composition providing excellent protection"
+    when :gem
+      "#{@material.capitalize} crystalline structure with unique properties"
+    when :metal
+      "#{@material.capitalize} metallic plating offering superior defense"
+    when :other
+      "#{@material.capitalize} exotic material with unusual characteristics"
+    else
+      "#{@material.capitalize} composition of unknown origin"
+    end
+  end
+
+  def get_weapon_description
+    weapon_type = WEAPONS.find { |type, weapons| weapons.include?(@weapon) }&.first
+    description = @weapon.capitalize
+    case weapon_type
+    when :melee
+      "#{description} - Close combat specialization"
+    when :ranged
+      "#{description} - Long-range attack capability"
+    when :psychic
+      "#{description} - Mental/supernatural assault weapon"
+    else
+      description
+    end
+  end
+
+  def get_threat_assessment
+    case @difficulty
+    when 0..20 then "Manageable - Standard deployment recommended"
+    when 21..35 then "Serious - Enhanced tactical preparation required"
+    when 36..50 then "Extreme - Elite forces and specialized equipment needed"
+    when 51..65 then "Critical - Maximum force deployment essential"
+    else "Apocalyptic - Consider evacuation protocols"
     end
   end
 end

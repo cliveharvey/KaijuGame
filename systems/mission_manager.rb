@@ -20,11 +20,19 @@ class MissionManager
     puts "📍 Target Location: #{location_data[:city]}"
     puts "🎯 Threat: \"#{kaiju_data[:name_english]}\" (#{kaiju_data[:name_monster]})"
     puts "📊 Classification: #{kaiju_data[:size].capitalize} #{kaiju_data[:creature]}"
-    puts "🔍 Description: #{kaiju_data[:characteristic]}"
-    puts "🛡️  Armor Type: #{kaiju_data[:material]} skinned"
-    puts "⚔️  Primary Weapon: #{kaiju_data[:weapon]}"
-    puts "⚠️  Threat Level: #{kaiju_data[:difficulty]}"
-    puts "📈 Combat Stats: ATK:#{kaiju_data[:offense]} DEF:#{kaiju_data[:defense]} SPD:#{kaiju_data[:speed]} SPC:#{kaiju_data[:special]}"
+    puts
+    puts "🔍 PHYSICAL TRAITS:"
+    puts "   🦖 Form: #{kaiju_data[:size].capitalize} #{kaiju_data[:creature]}"
+    puts "   🛡️  Skin/Armor: #{kaiju_data[:material].capitalize} composition"
+    puts "   👁️  Features: #{kaiju_data[:characteristic].capitalize}"
+    puts "   ⚔️  Weapon: #{kaiju_data[:weapon].capitalize}"
+    puts
+    puts "📈 Combat Analysis:"
+    puts "   ⚔️  Offense: #{kaiju_data[:offense]} | 🛡️  Defense: #{kaiju_data[:defense]} | ⚡ Speed: #{kaiju_data[:speed]} | ✨ Special: #{kaiju_data[:special]}"
+    puts "   ⚠️  Overall Threat Level: #{kaiju_data[:difficulty]}"
+    puts
+    puts "🎯 Tactical Assessment:"
+    puts "   #{get_combat_style_description(kaiju_data)}"
     puts "=" * 60
     puts
 
@@ -122,6 +130,30 @@ class MissionManager
   end
 
   private
+
+  def get_combat_style_description(kaiju_data)
+    offense = kaiju_data[:offense]
+    defense = kaiju_data[:defense]
+    speed = kaiju_data[:speed]
+    special = kaiju_data[:special]
+    weapon = kaiju_data[:weapon]
+
+    if offense > defense && offense > speed
+      if weapon.include?('claw') || weapon.include?('jaw') || weapon.include?('fist')
+        "💥 Aggressive melee combatant - Expect brutal close-range attacks"
+      else
+        "🔥 Heavy assault specialist - High damage output expected"
+      end
+    elsif defense > offense && defense > speed
+      "🛡️  Defensive tank - Will be tough to bring down, prepare for prolonged engagement"
+    elsif speed > offense && speed > defense
+      "⚡ Hit-and-run specialist - Fast strikes, hard to pin down"
+    elsif special > 25
+      "✨ Supernatural abilities - Unpredictable, expect unusual attacks"
+    else
+      "⚖️  Balanced fighter - Adaptable to situations, well-rounded threat"
+    end
+  end
 
   def clear_screen
     begin
