@@ -1,53 +1,93 @@
 # 🦖 Kaiju Defense Force
 
-A text-based kaiju battle game built for rapid hackathon development.
+A browser-based tactical defense game where you command elite squads against giant monsters threatening cities worldwide.
 
 ## 🚀 Quick Start
 
-```bash
-# Run the game
-ruby kaiju_game.rb
+### Prerequisites
+- Ruby 2.6+
+- Bundler gem
 
-# Or make it executable and run directly
-chmod +x kaiju_game.rb
-./kaiju_game.rb
-```
+### Installation
 
-## 🎮 Game Features
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd KaijuGame
+   ```
 
-- **Procedural Kaiju Generation**: Each kaiju is unique with random characteristics
-- **Squad-based Combat**: Manage a team of soldiers with different skills
-- **Multiple Outcomes**: Soldiers can be killed, injured, or emerge victorious
-- **Global Locations**: Kaiju attack cities around the world
-- **Replayable Missions**: Different scenarios each time
+2. **Install dependencies**
+   ```bash
+   bundle install --path vendor/bundle
+   ```
 
-## 🛠 Hackathon-Ready Architecture
+3. **Set up environment variables**
+   ```bash
+   # Generate a secure session secret
+   ruby -e "require 'securerandom'; puts SecureRandom.hex(32)"
 
-The game is built with clean Ruby classes that make it easy to add features:
+   # Create .env file with the generated secret
+   echo "SESSION_SECRET=your_generated_secret_here" > .env
+   ```
 
-- `Kaiju` - Monster generation and stats
-- `Soldier` - Individual fighter with skills and status
-- `Squad` - Team management and combat resolution
-- `Location` - Random city selection
-- `KaijuGame` - Main game loop and UI
+4. **Start the server**
+   ```bash
+   bundle exec ruby app.rb
+   ```
 
-## 💡 Quick Feature Ideas
+5. **Open your browser**
+   Navigate to `http://localhost:4567`
 
-Easy additions you could implement in < 30 minutes:
+## 🎮 How to Play
 
-- **Weapon Types**: Different squad loadouts (rifles, rockets, etc.)
-- **Kaiju Abilities**: Special powers that affect combat
-- **Base Building**: Upgrades between missions
-- **Story Mode**: Connected missions with progression
-- **Multiple Squads**: Different teams with specializations
-- **Difficulty Scaling**: Increasingly dangerous kaiju
+### Mission Briefing
+- Review kaiju physical traits, combat stats, and threat level
+- Analyze the creature's skin material, weapons, and special characteristics
+- Choose to **Accept** or **Reject** the mission
 
-## 🎯 Hackathon Advantages
+### Squad Selection
+- **Casualty Risk Assessment**: Each squad shows estimated risk level
+- **Squad Metrics**: Compare offensive, defensive, and leadership capabilities
+- **Tactical Notes**: Get recommendations based on threat analysis
+- Select your squad and deploy!
 
-- **Zero Dependencies**: Pure Ruby, runs anywhere
-- **Instant Iteration**: Edit code → run → test in seconds
-- **Clean Architecture**: Easy to extend and modify
-- **Text-Based**: Focus on mechanics, not graphics
-- **Procedural Content**: Infinite replayability
+### Battle Results
+- Watch detailed combat reports unfold
+- Track soldier promotions and casualties
+- Automatic recruitment replaces fallen heroes
+- Continue operations with new missions
 
-Built for speed and creativity! 🚀
+## 🔧 Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SESSION_SECRET` | 32+ character secret for session encryption | Yes |
+| `PORT` | Server port (default: 4567) | No |
+| `RACK_ENV` | Environment (development/production) | No |
+
+## 🏗️ Development
+
+The game uses:
+- **Backend**: Ruby + Sinatra
+- **Frontend**: Vanilla JavaScript + CSS
+- **Session Management**: Encrypted cookies
+- **Game Logic**: Object-oriented Ruby classes
+
+## 🎯 Features
+
+- **Rich Kaiju Traits**: Physical materials, weapons, and characteristics
+- **Tactical Combat**: Squad-based battles with detailed narratives
+- **Risk Assessment**: Real-time casualty predictions
+- **Soldier Progression**: Experience, levels, and promotions
+- **Auto-Recruitment**: Maintain squad strength
+- **Responsive UI**: Modern web interface
+
+## 🔒 Security
+
+- Session secrets are environment-based (never hardcoded)
+- Sensitive data excluded from repository
+- Secure cookie handling
+
+---
+
+*Defend humanity. Command your forces. Save the world.*

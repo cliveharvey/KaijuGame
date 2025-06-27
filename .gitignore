@@ -349,6 +349,11 @@ vendor/bundle/
 *.gem
 *.rbc
 
+# Environment variables (contains sensitive data like session secrets)
+.env
+.env.local
+.env.*.local
+
 # Temporary files
 *.tmp
 *.log
