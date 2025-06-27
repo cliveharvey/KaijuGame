@@ -65,6 +65,8 @@ class BattleSystem
 
     puts "⚔️  DETAILED BATTLE REPORT ⚔️"
     puts "\n\"#{kaiju.name_english}\" the #{kaiju.size} #{kaiju.creature} has made landfall!"
+    puts "🦖 The creature's #{kaiju.material} skin gleams in the light as it brandishes #{kaiju.weapon}!"
+    puts "👁️  Notable feature: #{kaiju.characteristic}"
     puts
 
     # Show enhanced battle intro
@@ -84,7 +86,13 @@ class BattleSystem
     sleep(1)
     puts
 
-    success = squad.combat(kaiju.difficulty)
+    success = squad.combat(kaiju)
+
+    # Show a trait-based battle scene before individual reports
+    puts "🌪️  KAIJU ENGAGEMENT INITIATED!"
+    puts "   #{@battle_text.get_trait_based_combat_description(kaiju, success)}"
+    puts
+    sleep(2)
 
     # Show soldier battle results progressively (combat narrative only)
     squad.soldiers.each_with_index do |soldier, index|
@@ -103,6 +111,13 @@ class BattleSystem
       battle_texts.each do |text|
         puts "   #{text}"
         sleep(0.7)  # Pause between each line for dramatic effect
+      end
+
+      # Add trait-specific interaction for this soldier
+      if soldier.success || soldier.status != :kia
+        trait_interaction = get_soldier_trait_interaction(soldier, kaiju)
+        puts "   🎯 #{trait_interaction}"
+        sleep(0.5)
       end
 
       puts "   📡 Transmission ended..."
@@ -173,6 +188,56 @@ class BattleSystem
   end
 
   private
+
+  def get_soldier_trait_interaction(soldier, kaiju)
+    # Generate soldier-specific interactions with kaiju traits
+    interactions = []
+
+    # Based on soldier's dominant skill and kaiju traits
+    dominant_skill = get_dominant_soldier_skill(soldier)
+
+    case dominant_skill
+    when :offense
+      case kaiju.material
+      when 'titanium', 'steel'
+        interactions << "#{soldier.name} focused armor-piercing fire on the metallic plating"
+      when 'glass'
+        interactions << "#{soldier.name} targeted stress points in the crystalline armor"
+      when 'ice'
+        interactions << "#{soldier.name} used thermal ammunition against the frozen hide"
+      else
+        interactions << "#{soldier.name} found weak points in the #{kaiju.material} armor"
+      end
+    when :defense
+      case kaiju.weapon
+      when /claw/
+        interactions << "#{soldier.name} used defensive positioning to avoid the creature's claws"
+      when /breath|spit/
+        interactions << "#{soldier.name} took cover from the creature's ranged attacks"
+      when /roar|blast/
+        interactions << "#{soldier.name} maintained composure despite the psychological assault"
+      else
+        interactions << "#{soldier.name} defensively countered the #{kaiju.weapon}"
+      end
+    when :grit
+      interactions << "#{soldier.name} pushed through the terror of facing the #{kaiju.size} beast"
+    when :leadership
+      interactions << "#{soldier.name} coordinated the squad's response to the creature's #{kaiju.characteristic}"
+    end
+
+    interactions << "#{soldier.name} adapted their tactics to the creature's unique traits"
+    interactions.sample
+  end
+
+  def get_dominant_soldier_skill(soldier)
+    skills = {
+      offense: soldier.offense,
+      defense: soldier.defense,
+      grit: soldier.grit,
+      leadership: soldier.leadership
+    }
+    skills.max_by { |_, value| value }.first
+  end
 
   def count_casualties(squad)
     squad.soldiers.count { |s| s.status == :kia }
