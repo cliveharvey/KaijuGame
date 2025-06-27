@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     base64 (0.3.0)
+    dotenv (2.8.1)
     ffi (1.17.2)
     json (2.7.6)
     listen (3.9.0)
@@ -40,6 +41,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  dotenv (~> 2.8)
   json
   puma
   rerun
