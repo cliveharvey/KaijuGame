@@ -1,7 +1,8 @@
 require_relative '../generators/soldier_name_generator'
 
 class Soldier
-  attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success, :background
+  attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success, :background,
+                :level, :experience, :experience_to_next_level, :missions_completed
 
   def initialize(name_length = nil, offense = rand(10..30), defense = rand(10..30), grit = rand(10..30), leadership = rand(10..30))
     @name = SoldierNameGenerator.generate_name
@@ -12,6 +13,12 @@ class Soldier
     @status = :alive
     @success = false
     @background = nil  # Will be set for recruits
+
+    # Leveling system
+    @level = 1
+    @experience = 0
+    @experience_to_next_level = experience_needed_for_level(2)
+    @missions_completed = 0
   end
 
   def combat(kaiju_or_difficulty)
@@ -58,30 +65,30 @@ class Soldier
         false
       else
         @status = :injured
-        improve_skills(difficulty / 3)
+        gain_experience(difficulty / 3)
         false
       end
     when (adjusted_difficulty - 20)..(adjusted_difficulty - 10)
       if defense_roll < (adjusted_difficulty - 10)
         @status = :injured
-        improve_skills(difficulty / 2)
+        gain_experience(difficulty / 2)
         @success = true
       else
         @status = :shaken
-        improve_skills(difficulty / 2)
+        gain_experience(difficulty / 2)
         @success = true
       end
     when (adjusted_difficulty - 10)..(adjusted_difficulty)
       if defense_roll < (adjusted_difficulty - 5)
         @status = :shaken
-        improve_skills(difficulty)
+        gain_experience(difficulty)
         @success = true
       else
-        improve_skills(difficulty)
+        gain_experience(difficulty)
         @success = true
       end
     else
-      improve_skills(difficulty + 5)
+      gain_experience(difficulty + 5)
       @success = true
     end
   end
@@ -147,13 +154,13 @@ class Soldier
       @success = false  # Dead soldiers can't contribute
     elsif kaiju_damage_roll > survival_threshold + 15
       @status = :injured
-      improve_skills(experience_gain)
+      gain_experience(experience_gain)
     elsif kaiju_damage_roll > survival_threshold + 8
       @status = :shaken
-      improve_skills(experience_gain)
+      gain_experience(experience_gain)
     else
-      # Survived unharmed
-      improve_skills(experience_gain)
+      # Survived unharmed - bonus XP for clean performance
+      gain_experience(experience_gain + 5)
     end
 
     @success
@@ -169,7 +176,7 @@ class Soldier
   end
 
   def skill_summary
-    "O:#{@offense} D:#{@defense} G:#{@grit} L:#{@leadership}"
+    "Lv.#{@level} O:#{@offense} D:#{@defense} G:#{@grit} L:#{@leadership}"
   end
 
   def is_weak_soldier?
@@ -191,33 +198,177 @@ class Soldier
     end
   end
 
+  def complete_mission
+    @missions_completed += 1
+    # Mission completion bonus
+    gain_experience(10)
+  end
+
+  def gain_experience(exp_points)
+    return [] if @status == :kia  # Dead soldiers don't gain experience
+
+    old_level = @level
+    @experience += exp_points.round
+
+    # Check for level ups
+    level_ups = []
+    while @experience >= experience_needed_for_level(@level + 1)
+      @level += 1
+      level_up_stats = level_up!
+      level_ups << level_up_stats
+    end
+
+    # Update experience to next level
+    @experience_to_next_level = experience_needed_for_level(@level + 1) - @experience
+
+    # Return level up information for display
+    level_ups
+  end
+
+  def level_up!
+    # Store old stats for comparison
+    old_stats = {
+      offense: @offense,
+      defense: @defense,
+      grit: @grit,
+      leadership: @leadership
+    }
+
+    # Level up stat gains - more generous at higher levels
+    base_gain = 1 + (@level / 5)  # Base gain increases every 5 levels
+
+    # Random stat improvements
+    offense_gain = rand(base_gain..(base_gain + 2))
+    defense_gain = rand(base_gain..(base_gain + 2))
+    grit_gain = rand(base_gain..(base_gain + 2))
+    leadership_gain = rand(base_gain..(base_gain + 2))
+
+    # Apply improvements
+    @offense += offense_gain
+    @defense += defense_gain
+    @grit += grit_gain
+    @leadership += leadership_gain
+
+    # Check for nickname earning after leveling
+    maybe_earn_nickname
+
+    # Return stat changes for display
+    {
+      level: @level,
+      old_stats: old_stats,
+      new_stats: {
+        offense: @offense,
+        defense: @defense,
+        grit: @grit,
+        leadership: @leadership
+      },
+      gains: {
+        offense: offense_gain,
+        defense: defense_gain,
+        grit: grit_gain,
+        leadership: leadership_gain
+      }
+    }
+  end
+
+  def experience_needed_for_level(target_level)
+    # Exponential XP curve: Level 2 = 50, Level 3 = 120, Level 4 = 220, etc.
+    return 0 if target_level <= 1
+    base = 50
+    (base * (target_level - 1) * (target_level - 1) * 0.8).round
+  end
+
+  def experience_progress_bar
+    return "MAX LEVEL" if @level >= 20  # Cap at level 20
+
+    current = @experience
+    needed = experience_needed_for_level(@level + 1)
+    progress = (current.to_f / needed * 10).round
+
+    bar = "█" * progress + "░" * (10 - progress)
+    "#{bar} #{current}/#{needed} XP"
+  end
+
+  def level_title
+    case @level
+    when 1..2 then "Recruit"
+    when 3..4 then "Private"
+    when 5..6 then "Corporal"
+    when 7..8 then "Sergeant"
+    when 9..10 then "Staff Sergeant"
+    when 11..12 then "Lieutenant"
+    when 13..14 then "Captain"
+    when 15..16 then "Major"
+    when 17..18 then "Colonel"
+    when 19..20 then "General"
+    else "Legend"
+    end
+  end
+
+  def detailed_info
+    "#{@name} - #{level_title} (Level #{@level})\n" +
+    "#{skill_summary} | Total: #{total_skill}\n" +
+    "Experience: #{experience_progress_bar}\n" +
+    "Missions: #{@missions_completed} | Status: #{@status.to_s.upcase}"
+  end
+
   def maybe_earn_nickname
-    # Veterans with high skills should have nicknames
-    # Define veteran status as total skill > 90 (was 100)
-    if total_skill > 90 && !@name.include?('"')
-      # 80% chance for veterans to earn nicknames (was 40%)
-      if rand < 0.8
+    # Veterans with high skills or levels should have nicknames
+    if (@level >= 5 || total_skill > 90) && !@name.include?('"')
+      # Higher chance for higher levels
+      chance = [@level * 0.1, 0.8].min
+      if rand < chance
         @name = SoldierNameGenerator.generate_veteran_name(@name)
       end
     end
 
-    # Elite veterans (total skill > 110) ALWAYS get nicknames
-    if total_skill > 110 && !@name.include?('"')
+    # Elite veterans ALWAYS get nicknames
+    if (@level >= 10 || total_skill > 110) && !@name.include?('"')
       @name = SoldierNameGenerator.generate_veteran_name(@name)
     end
   end
 
+  # Serialization for save/load
+  def to_hash
+    {
+      name: @name,
+      offense: @offense,
+      defense: @defense,
+      grit: @grit,
+      leadership: @leadership,
+      status: @status,
+      background: @background,
+      level: @level,
+      experience: @experience,
+      missions_completed: @missions_completed
+    }
+  end
+
+  def self.from_hash(data)
+    soldier = allocate
+    soldier.instance_variable_set(:@name, data[:name])
+    soldier.instance_variable_set(:@offense, data[:offense])
+    soldier.instance_variable_set(:@defense, data[:defense])
+    soldier.instance_variable_set(:@grit, data[:grit])
+    soldier.instance_variable_set(:@leadership, data[:leadership])
+    soldier.instance_variable_set(:@status, data[:status] || :alive)
+    soldier.instance_variable_set(:@background, data[:background])
+    soldier.instance_variable_set(:@level, data[:level] || 1)
+    soldier.instance_variable_set(:@experience, data[:experience] || 0)
+    soldier.instance_variable_set(:@missions_completed, data[:missions_completed] || 0)
+    soldier.instance_variable_set(:@success, false)
+
+    # Calculate experience to next level
+    next_level_exp = soldier.experience_needed_for_level(soldier.level + 1)
+    soldier.instance_variable_set(:@experience_to_next_level, next_level_exp - soldier.experience)
+
+    soldier
+  end
+
   private
 
+  # Legacy method - now redirects to gain_experience
   def improve_skills(experience_gain)
-    # Distribute experience across skills based on performance
-    base_gain = [1, experience_gain / 4].max
-    @offense += rand(1..base_gain)
-    @defense += rand(1..base_gain)
-    @grit += rand(1..base_gain)
-    @leadership += rand(1..base_gain)
-
-    # Check for nickname earning after improvement
-    maybe_earn_nickname
+    gain_experience(experience_gain)
   end
 end
