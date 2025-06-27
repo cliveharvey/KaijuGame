@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦖 Kaiju Defense Force</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="game-header">
+            <div class="header-content">
+                <h1 class="game-title">🦖 KAIJU DEFENSE FORCE</h1>
+                <div class="game-stats">
+                    <span class="stat">Missions: <span id="missions-count">0</span></span>
+                    <span class="stat">Cities Lost: <span id="cities-destroyed">0</span></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="game-main">
+            <!-- Current Mission Panel -->
+            <section id="mission-panel" class="panel mission-panel" style="display: none;">
+                <div class="panel-header">
+                    <h2>🚨 KAIJU ALERT!</h2>
+                    <div class="alert-level" id="alert-level">THREAT LEVEL: UNKNOWN</div>
+                </div>
+
+                <div class="mission-content">
+                    <div class="kaiju-info">
+                        <div class="kaiju-header">
+                            <h3 id="kaiju-name">Loading...</h3>
+                            <p id="kaiju-designation" class="designation">...</p>
+                        </div>
+
+                        <div class="kaiju-details">
+                            <div class="detail-section">
+                                <h4>🦖 Physical Traits</h4>
+                                <div class="trait-grid">
+                                    <div class="trait">
+                                        <span class="trait-label">Form:</span>
+                                        <span id="kaiju-form">...</span>
+                                    </div>
+                                    <div class="trait">
+                                        <span class="trait-label">Skin:</span>
+                                        <span id="kaiju-material">...</span>
+                                    </div>
+                                    <div class="trait">
+                                        <span class="trait-label">Features:</span>
+                                        <span id="kaiju-characteristic">...</span>
+                                    </div>
+                                    <div class="trait">
+                                        <span class="trait-label">Weapon:</span>
+                                        <span id="kaiju-weapon">...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h4>📊 Combat Stats</h4>
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <span class="stat-icon">⚔️</span>
+                                        <span class="stat-label">ATK</span>
+                                        <span id="kaiju-offense" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-icon">🛡️</span>
+                                        <span class="stat-label">DEF</span>
+                                        <span id="kaiju-defense" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-icon">⚡</span>
+                                        <span class="stat-label">SPD</span>
+                                        <span id="kaiju-speed" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-icon">✨</span>
+                                        <span class="stat-label">SPC</span>
+                                        <span id="kaiju-special" class="stat-value">0</span>
+                                    </div>
+                                </div>
+                                <div class="threat-level">
+                                    <span>Overall Threat: </span>
+                                    <span id="kaiju-difficulty" class="difficulty-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="location-info">
+                            <p>📍 <strong>Target Location:</strong> <span id="mission-location">...</span></p>
+                        </div>
+                    </div>
+
+                    <div class="mission-actions">
+                        <button id="accept-mission-btn" class="btn btn-primary">✅ Accept Mission</button>
+                        <button id="reject-mission-btn" class="btn btn-danger">❌ Reject Mission</button>
+                        <button id="new-mission-btn" class="btn btn-secondary" style="display: none;">🔄 Generate New Mission</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Squad Selection Panel -->
+            <section id="squad-panel" class="panel squad-panel" style="display: none;">
+                <div class="panel-header">
+                    <h2>📋 Select Deployment Squad</h2>
+                </div>
+
+                <div class="squads-container" id="squads-container">
+                    <!-- Squads will be loaded here -->
+                </div>
+
+                <div class="squad-actions">
+                    <button id="deploy-squad-btn" class="btn btn-primary" disabled>🚁 Deploy Selected Squad</button>
+                    <button id="back-to-mission-btn" class="btn btn-secondary">⬅️ Back to Mission</button>
+                </div>
+            </section>
+
+            <!-- Battle Results Panel -->
+            <section id="battle-panel" class="panel battle-panel" style="display: none;">
+                <div class="panel-header">
+                    <h2>⚔️ Battle Report</h2>
+                </div>
+
+                <div class="battle-content">
+                    <div id="battle-result" class="battle-result">
+                        <!-- Battle results will be displayed here -->
+                    </div>
+
+                    <div id="casualties-report" class="casualties-report">
+                        <!-- Casualties and promotions will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="battle-actions">
+                    <button id="continue-operations-btn" class="btn btn-primary">➡️ Continue Operations</button>
+                </div>
+            </section>
+
+            <!-- Loading Panel -->
+            <section id="loading-panel" class="panel loading-panel">
+                <div class="loading-content">
+                    <div class="loading-spinner">🦖</div>
+                    <h2>KAIJU DEFENSE FORCE</h2>
+                    <p>Initializing tactical systems...</p>
+                    <button id="start-game-btn" class="btn btn-primary">🚀 Start Operations</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/game.js"></script>
+</body>
+</html>

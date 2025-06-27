@@ -342,3 +342,39 @@ healthchecksdb
 # Kaiju Defense Force game save files
 kaiju_save.json
 *.save.json
+
+# Ruby/Bundler files
+vendor/bundle/
+.bundle/
+*.gem
+*.rbc
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+cookies.txt
+
+# Session/Runtime data
+sessions/
+tmp/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Optional: Gemfile.lock (uncomment if you want to exclude it)
+# Gemfile.lock

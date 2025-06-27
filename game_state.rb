@@ -3,17 +3,18 @@
 require 'json'
 require 'ostruct'
 require_relative 'models/squad'
+require_relative 'models/soldier'
 require_relative 'generators/soldier_name_generator'
 require_relative 'generators/squad_name_generator'
 
 class GameState
   SAVE_FILE = 'kaiju_save.json'
 
-  attr_reader :squad_alpha, :squad_beta, :missions_completed, :victories, :defeats, :total_kaiju_defeated, :soldiers_lost, :recruits_added, :pending_mission, :cities_destroyed
+  attr_reader :squad_alpha, :squad_bravo, :missions_completed, :victories, :defeats, :total_kaiju_defeated, :soldiers_lost, :recruits_added, :pending_mission, :cities_destroyed
 
-  def initialize
+    def initialize(skip_squad_creation = false)
     @squad_alpha = nil
-    @squad_beta = nil
+    @squad_bravo = nil
     @missions_completed = 0
     @victories = 0
     @defeats = 0
@@ -22,12 +23,15 @@ class GameState
     @recruits_added = 0
     @pending_mission = nil
     @cities_destroyed = 0
+
+    # Auto-create squads for web interface (unless we're deserializing)
+    create_new_squads_if_needed unless skip_squad_creation
   end
 
   def save_game
-    save_data = {
-      squad_alpha: serialize_squad(@squad_alpha),
-      squad_beta: serialize_squad(@squad_beta),
+          save_data = {
+        squad_alpha: serialize_squad(@squad_alpha),
+        squad_bravo: serialize_squad(@squad_bravo),
       missions_completed: @missions_completed,
       victories: @victories,
       defeats: @defeats,
@@ -49,8 +53,8 @@ class GameState
 
     save_data = JSON.parse(File.read(SAVE_FILE))
 
-    @squad_alpha = deserialize_squad(save_data['squad_alpha'])
-    @squad_beta = deserialize_squad(save_data['squad_beta'])
+          @squad_alpha = deserialize_squad(save_data['squad_alpha'])
+      @squad_bravo = deserialize_squad(save_data['squad_bravo'])
     @missions_completed = save_data['missions_completed'] || 0
     @victories = save_data['victories'] || 0
     @defeats = save_data['defeats'] || 0
@@ -82,22 +86,28 @@ class GameState
     squad_names = SquadNameGenerator.generate_pair_of_squad_names
 
     @squad_alpha = Squad.new(squad_names[0], 5)
-    @squad_beta = Squad.new(squad_names[1], 5)
-    puts "🆕 New squads created: #{@squad_alpha.name} and #{@squad_beta.name}"
+    @squad_bravo = Squad.new(squad_names[1], 5)
+    puts "🆕 New squads created: #{@squad_alpha.name} and #{@squad_bravo.name}"
   end
 
-  def record_mission_result(victory, kaiju_defeated = false, casualties = 0)
+  def create_new_squads_if_needed
+    if @squad_alpha.nil? || @squad_bravo.nil?
+      create_new_squads
+    end
+  end
+
+  def record_mission_result(success, victory, casualties)
     @missions_completed += 1
-    if victory
+    if success
       @victories += 1
-      @total_kaiju_defeated += 1 if kaiju_defeated
+      @total_kaiju_defeated += 1
     else
       @defeats += 1
     end
     @soldiers_lost += casualties
   end
 
-    def add_recruits_to_squad(squad, count)
+  def add_recruits_to_squad(squad, count)
     return if count <= 0
 
     count.times do
@@ -118,7 +128,7 @@ class GameState
   end
 
   def get_squads
-    [@squad_alpha, @squad_beta].compact
+    [@squad_alpha, @squad_bravo]
   end
 
   def show_campaign_stats
@@ -139,7 +149,7 @@ class GameState
     end
 
     puts "\n🪖 SQUAD STATUS:"
-    [@squad_alpha, @squad_beta].compact.each do |squad|
+    [@squad_alpha, @squad_bravo].compact.each do |squad|
       puts "   #{squad.name}: #{squad.soldiers.count} soldiers"
       if squad.soldiers.any?
         veteran_count = squad.soldiers.count { |s| s.total_skill > 90 }
@@ -333,6 +343,153 @@ class GameState
     end
   end
 
+  # Serialize game state to hash for web sessions
+  def to_hash
+    {
+      'squad_alpha' => serialize_squad(@squad_alpha),
+      'squad_bravo' => serialize_squad(@squad_bravo),
+      'missions_completed' => @missions_completed,
+      'victories' => @victories,
+      'defeats' => @defeats,
+      'total_kaiju_defeated' => @total_kaiju_defeated,
+      'soldiers_lost' => @soldiers_lost,
+      'recruits_added' => @recruits_added,
+      'pending_mission' => serialize_pending_mission(@pending_mission),
+      'cities_destroyed' => @cities_destroyed
+    }
+  end
+
+  # Deserialize game state from hash
+  def self.from_hash(hash)
+    return new unless hash
+
+    game_state = new(true)  # Skip squad creation during deserialization
+    game_state.instance_variable_set(:@squad_alpha, game_state.deserialize_squad(hash['squad_alpha']))
+    game_state.instance_variable_set(:@squad_bravo, game_state.deserialize_squad(hash['squad_bravo']))
+    game_state.instance_variable_set(:@missions_completed, hash['missions_completed'] || 0)
+    game_state.instance_variable_set(:@victories, hash['victories'] || 0)
+    game_state.instance_variable_set(:@defeats, hash['defeats'] || 0)
+    game_state.instance_variable_set(:@total_kaiju_defeated, hash['total_kaiju_defeated'] || 0)
+    game_state.instance_variable_set(:@soldiers_lost, hash['soldiers_lost'] || 0)
+    game_state.instance_variable_set(:@recruits_added, hash['recruits_added'] || 0)
+    game_state.instance_variable_set(:@pending_mission, game_state.deserialize_pending_mission(hash['pending_mission']))
+    game_state.instance_variable_set(:@cities_destroyed, hash['cities_destroyed'] || 0)
+    game_state
+  end
+
+  def get_missions_completed
+    @missions_completed
+  end
+
+  def get_cities_destroyed
+    @cities_destroyed
+  end
+
+  def serialize_squad(squad)
+    return nil unless squad
+
+    {
+      'name' => squad.name,
+      'soldiers' => squad.soldiers.map { |soldier| serialize_soldier(soldier) }
+    }
+  end
+
+  def deserialize_squad(squad_data)
+    return nil unless squad_data
+
+    squad = Squad.new(squad_data['name'], 0)  # Start with 0 soldiers
+    squad.soldiers = squad_data['soldiers'].map { |soldier_data| deserialize_soldier(soldier_data) }
+    squad
+  end
+
+  def serialize_soldier(soldier)
+    {
+      'name' => soldier.name,
+      'offense' => soldier.offense,
+      'defense' => soldier.defense,
+      'grit' => soldier.grit,
+      'leadership' => soldier.leadership,
+      'status' => soldier.status.to_s,
+      'success' => soldier.success,
+      'background' => soldier.background,
+      'level' => soldier.level,
+      'experience' => soldier.experience,
+      'experience_to_next_level' => soldier.experience_to_next_level,
+      'missions_completed' => soldier.missions_completed
+    }
+  end
+
+  def deserialize_soldier(soldier_data)
+    soldier = Soldier.new(nil,
+                         soldier_data['offense'],
+                         soldier_data['defense'],
+                         soldier_data['grit'],
+                         soldier_data['leadership'])
+
+    soldier.name = soldier_data['name']
+    soldier.status = soldier_data['status'].to_sym
+    soldier.success = soldier_data['success']
+    soldier.background = soldier_data['background']
+    soldier.level = soldier_data['level'] || 1
+    soldier.experience = soldier_data['experience'] || 0
+    soldier.experience_to_next_level = soldier_data['experience_to_next_level'] || 0
+    soldier.missions_completed = soldier_data['missions_completed'] || 0
+
+    soldier
+  end
+
+  def serialize_pending_mission(mission)
+    return nil unless mission && mission[:kaiju] && mission[:location]
+
+    {
+      kaiju: {
+        name_english: mission[:kaiju][:name_english],
+        name_monster: mission[:kaiju][:name_monster],
+        size: mission[:kaiju][:size],
+        creature: mission[:kaiju][:creature],
+        characteristic: mission[:kaiju][:characteristic],
+        material: mission[:kaiju][:material],
+        weapon: mission[:kaiju][:weapon],
+        difficulty: mission[:kaiju][:difficulty],
+        offense: mission[:kaiju][:offense],
+        defense: mission[:kaiju][:defense],
+        speed: mission[:kaiju][:speed],
+        special: mission[:kaiju][:special]
+      },
+      location: {
+        city: mission[:location][:city]
+      }
+    }
+  end
+
+  def deserialize_pending_mission(mission_data)
+    return nil unless mission_data && (mission_data[:kaiju] || mission_data['kaiju']) && (mission_data[:location] || mission_data['location'])
+
+    # Handle both symbol and string keys
+    kaiju_data = mission_data[:kaiju] || mission_data['kaiju']
+    location_data = mission_data[:location] || mission_data['location']
+
+    {
+      kaiju: {
+        name_english: kaiju_data[:name_english] || kaiju_data['name_english'],
+        name_monster: kaiju_data[:name_monster] || kaiju_data['name_monster'],
+        size: kaiju_data[:size] || kaiju_data['size'],
+        creature: kaiju_data[:creature] || kaiju_data['creature'],
+        characteristic: kaiju_data[:characteristic] || kaiju_data['characteristic'],
+        material: kaiju_data[:material] || kaiju_data['material'],
+        weapon: kaiju_data[:weapon] || kaiju_data['weapon'],
+        difficulty: kaiju_data[:difficulty] || kaiju_data['difficulty'],
+        offense: kaiju_data[:offense] || kaiju_data['offense'] || 0,
+        defense: kaiju_data[:defense] || kaiju_data['defense'] || 0,
+        speed: kaiju_data[:speed] || kaiju_data['speed'] || 0,
+        special: kaiju_data[:special] || kaiju_data['special'] || 0
+      },
+      location: {
+        city: location_data[:city] || location_data['city']
+      }
+    }
+  end
+
   private
 
   def clean_recruit_name(name_with_profession)
@@ -359,102 +516,6 @@ class GameState
     # Override with specialized recruit name that includes background
     recruit.name = SoldierNameGenerator.generate_recruit_name
     recruit
-  end
-
-  def serialize_squad(squad)
-    return nil unless squad
-
-    {
-      name: squad.name,
-      soldiers: squad.soldiers.map do |soldier|
-        {
-          name: soldier.name,
-          offense: soldier.offense,
-          defense: soldier.defense,
-          grit: soldier.grit,
-          leadership: soldier.leadership,
-          status: soldier.status,
-          success: soldier.success,
-          background: soldier.background
-        }
-      end
-    }
-  end
-
-  def deserialize_squad(squad_data)
-    return nil unless squad_data
-
-    # Create empty squad
-    squad = Squad.new(squad_data['name'], 0)
-
-    # Recreate soldiers
-    squad_data['soldiers'].each do |soldier_data|
-      soldier = Soldier.new(
-        nil,                         # name will be generated but we'll override it
-        soldier_data['offense'],
-        soldier_data['defense'],
-        soldier_data['grit'],
-        soldier_data['leadership']
-      )
-
-      # Override the generated name with the saved name
-      soldier.name = soldier_data['name']
-      soldier.status = soldier_data['status'].to_sym
-      soldier.success = soldier_data['success']
-      soldier.background = soldier_data['background']
-
-      squad.soldiers << soldier
-    end
-
-    squad
-  end
-
-  def serialize_pending_mission(mission)
-    return nil unless mission
-
-    {
-      kaiju: {
-        name_english: mission[:kaiju][:name_english],
-        name_monster: mission[:kaiju][:name_monster],
-        size: mission[:kaiju][:size],
-        creature: mission[:kaiju][:creature],
-        characteristic: mission[:kaiju][:characteristic],
-        material: mission[:kaiju][:material],
-        weapon: mission[:kaiju][:weapon],
-        difficulty: mission[:kaiju][:difficulty],
-        offense: mission[:kaiju][:offense],
-        defense: mission[:kaiju][:defense],
-        speed: mission[:kaiju][:speed],
-        special: mission[:kaiju][:special]
-      },
-      location: {
-        city: mission[:location][:city]
-      }
-    }
-  end
-
-  def deserialize_pending_mission(mission_data)
-    return nil unless mission_data
-
-    {
-      kaiju: {
-        name_english: mission_data['kaiju']['name_english'],
-        name_monster: mission_data['kaiju']['name_monster'],
-        size: mission_data['kaiju']['size'],
-        creature: mission_data['kaiju']['creature'],
-        characteristic: mission_data['kaiju']['characteristic'],
-        material: mission_data['kaiju']['material'],
-        weapon: mission_data['kaiju']['weapon'],
-        difficulty: mission_data['kaiju']['difficulty'],
-        offense: mission_data['kaiju']['offense'] || 0,
-        defense: mission_data['kaiju']['defense'] || 0,
-        speed: mission_data['kaiju']['speed'] || 0,
-        special: mission_data['kaiju']['special'] || 0
-      },
-      location: {
-        city: mission_data['location']['city']
-      }
-    }
   end
 
   def clear_screen
