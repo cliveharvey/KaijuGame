@@ -413,53 +413,62 @@ class GameState
 
   def serialize_squad(squad)
     return nil unless squad
-
     {
-      'name' => squad.name,
-      'soldiers' => squad.soldiers.map { |soldier| serialize_soldier(soldier) }
+      name: squad.name,
+      soldiers: squad.soldiers.map { |soldier| serialize_soldier(soldier) },
+      missions_completed: squad.missions_completed || 0,
+      victories: squad.victories || 0,
+      toughest_kaiju_defeated: squad.toughest_kaiju_defeated,
+      total_casualties: squad.total_casualties || 0
     }
   end
 
   def deserialize_squad(squad_data)
     return nil unless squad_data
-
-    squad = Squad.new(squad_data['name'], 0)  # Start with 0 soldiers
-    squad.soldiers = squad_data['soldiers'].map { |soldier_data| deserialize_soldier(soldier_data) }
+    squad = Squad.new(squad_data['name'] || squad_data[:name], 0)
+    squad.soldiers = (squad_data['soldiers'] || squad_data[:soldiers] || []).map { |soldier_data| deserialize_soldier(soldier_data) }
+    squad.missions_completed = squad_data['missions_completed'] || squad_data[:missions_completed] || 0
+    squad.victories = squad_data['victories'] || squad_data[:victories] || 0
+    squad.toughest_kaiju_defeated = squad_data['toughest_kaiju_defeated'] || squad_data[:toughest_kaiju_defeated]
+    squad.total_casualties = squad_data['total_casualties'] || squad_data[:total_casualties] || 0
     squad
   end
 
   def serialize_soldier(soldier)
     {
-      'name' => soldier.name,
-      'offense' => soldier.offense,
-      'defense' => soldier.defense,
-      'grit' => soldier.grit,
-      'leadership' => soldier.leadership,
-      'status' => soldier.status.to_s,
-      'success' => soldier.success,
-      'background' => soldier.background,
-      'level' => soldier.level,
-      'experience' => soldier.experience,
-      'experience_to_next_level' => soldier.experience_to_next_level,
-      'missions_completed' => soldier.missions_completed
+      name: soldier.name,
+      offense: soldier.offense,
+      defense: soldier.defense,
+      grit: soldier.grit,
+      leadership: soldier.leadership,
+      status: soldier.status,
+      background: soldier.background,
+      level: soldier.level,
+      experience: soldier.experience,
+      missions_completed: soldier.missions_completed,
+      successful_missions: soldier.successful_missions || 0,
+      kills: soldier.kills || 0
     }
   end
 
   def deserialize_soldier(soldier_data)
     soldier = Soldier.new(nil,
-                         soldier_data['offense'],
-                         soldier_data['defense'],
-                         soldier_data['grit'],
-                         soldier_data['leadership'])
+                          soldier_data['offense'] || soldier_data[:offense],
+                          soldier_data['defense'] || soldier_data[:defense],
+                          soldier_data['grit'] || soldier_data[:grit],
+                          soldier_data['leadership'] || soldier_data[:leadership])
+    soldier.name = soldier_data['name'] || soldier_data[:name]
+    soldier.status = soldier_data['status'] || soldier_data[:status] || :alive
+    soldier.background = soldier_data['background'] || soldier_data[:background]
+    soldier.level = soldier_data['level'] || soldier_data[:level] || 1
+    soldier.experience = soldier_data['experience'] || soldier_data[:experience] || 0
+    soldier.missions_completed = soldier_data['missions_completed'] || soldier_data[:missions_completed] || 0
+    soldier.successful_missions = soldier_data['successful_missions'] || soldier_data[:successful_missions] || 0
+    soldier.kills = soldier_data['kills'] || soldier_data[:kills] || 0
 
-    soldier.name = soldier_data['name']
-    soldier.status = soldier_data['status'].to_sym
-    soldier.success = soldier_data['success']
-    soldier.background = soldier_data['background']
-    soldier.level = soldier_data['level'] || 1
-    soldier.experience = soldier_data['experience'] || 0
-    soldier.experience_to_next_level = soldier_data['experience_to_next_level'] || 0
-    soldier.missions_completed = soldier_data['missions_completed'] || 0
+    # Calculate experience to next level
+    next_level_exp = soldier.experience_needed_for_level(soldier.level + 1)
+    soldier.experience_to_next_level = next_level_exp - soldier.experience
 
     soldier
   end

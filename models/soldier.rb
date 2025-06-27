@@ -2,7 +2,7 @@ require_relative '../generators/soldier_name_generator'
 
 class Soldier
   attr_accessor :name, :offense, :defense, :grit, :leadership, :status, :success, :background,
-                :level, :experience, :experience_to_next_level, :missions_completed
+                :level, :experience, :experience_to_next_level, :missions_completed, :successful_missions, :kills
 
   def initialize(name_length = nil, offense = rand(10..30), defense = rand(10..30), grit = rand(10..30), leadership = rand(10..30))
     @name = SoldierNameGenerator.generate_name
@@ -19,6 +19,8 @@ class Soldier
     @experience = 0
     @experience_to_next_level = experience_needed_for_level(2)
     @missions_completed = 0
+    @successful_missions = 0
+    @kills = 0
   end
 
   def combat(kaiju_or_difficulty)
@@ -210,10 +212,17 @@ class Soldier
     end
   end
 
-  def complete_mission
+  def complete_mission(mission_successful = false)
     @missions_completed += 1
+    if mission_successful
+      @successful_missions += 1
+    end
     # Mission completion bonus
     gain_experience(10)
+  end
+
+  def record_kill
+    @kills += 1
   end
 
   def gain_experience(exp_points)
@@ -352,7 +361,9 @@ class Soldier
       background: @background,
       level: @level,
       experience: @experience,
-      missions_completed: @missions_completed
+      missions_completed: @missions_completed,
+      successful_missions: @successful_missions,
+      kills: @kills
     }
   end
 
@@ -368,6 +379,8 @@ class Soldier
     soldier.instance_variable_set(:@level, data[:level] || 1)
     soldier.instance_variable_set(:@experience, data[:experience] || 0)
     soldier.instance_variable_set(:@missions_completed, data[:missions_completed] || 0)
+    soldier.instance_variable_set(:@successful_missions, data[:successful_missions] || 0)
+    soldier.instance_variable_set(:@kills, data[:kills] || 0)
     soldier.instance_variable_set(:@success, false)
 
     # Calculate experience to next level

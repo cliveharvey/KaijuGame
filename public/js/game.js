@@ -13,12 +13,11 @@ class KaijuGame {
     }
 
     setupEventListeners() {
-        // Start game
+        // Game flow buttons
         document.getElementById('start-game-btn').addEventListener('click', () => {
             this.startGame();
         });
 
-        // Mission actions
         document.getElementById('accept-mission-btn').addEventListener('click', () => {
             this.acceptMission();
         });
@@ -31,7 +30,6 @@ class KaijuGame {
             this.generateNewMission();
         });
 
-        // Squad actions
         document.getElementById('deploy-squad-btn').addEventListener('click', () => {
             this.deploySquad();
         });
@@ -40,10 +38,244 @@ class KaijuGame {
             this.showPanel('mission');
         });
 
-        // Battle actions
         document.getElementById('continue-operations-btn').addEventListener('click', () => {
             this.continueOperations();
         });
+
+        // Navigation buttons
+        document.getElementById('nav-mission-btn').addEventListener('click', () => {
+            this.switchToPanel('mission');
+        });
+
+        document.getElementById('nav-squads-btn').addEventListener('click', () => {
+            this.switchToPanel('squads');
+        });
+
+        // Squad management event listeners
+        document.getElementById('close-soldier-details').addEventListener('click', () => {
+            this.closeSoldierDetails();
+        });
+    }
+
+    // Switch between main panels
+    async switchToPanel(panelType) {
+        if (panelType === 'mission') {
+            // Update nav buttons
+            document.getElementById('nav-mission-btn').classList.add('active');
+            document.getElementById('nav-squads-btn').classList.remove('active');
+
+            // Show mission panel
+            await this.startGame();
+        } else if (panelType === 'squads') {
+            // Update nav buttons
+            document.getElementById('nav-mission-btn').classList.remove('active');
+            document.getElementById('nav-squads-btn').classList.add('active');
+
+            // Load and show squad management
+            await this.loadSquadManagement();
+            this.showPanel('squad-management');
+        }
+    }
+
+    // Load squad management data
+    async loadSquadManagement() {
+        try {
+            const response = await fetch('/api/squad_management', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.displaySquadManagement(data.squads);
+            } else {
+                console.error('Failed to load squad management data');
+            }
+        } catch (error) {
+            console.error('Error loading squad management:', error);
+        }
+    }
+
+    // Display squad management interface
+    displaySquadManagement(squads) {
+        const squadList = document.getElementById('squad-list');
+        squadList.innerHTML = '';
+
+        squads.forEach(squad => {
+            const squadCard = this.createSquadCard(squad);
+            squadList.appendChild(squadCard);
+        });
+    }
+
+    // Create squad card element
+    createSquadCard(squad) {
+        const card = document.createElement('div');
+        card.className = 'squad-card';
+
+        const stats = squad.statistics;
+        const hasMissions = stats.missions_completed > 0;
+
+        card.innerHTML = `
+            <div class="squad-header">
+                <h3 class="squad-name">${squad.name}</h3>
+                <div class="squad-soldier-count">👥 ${squad.soldier_count} Soldiers</div>
+            </div>
+
+            ${hasMissions ? `
+                <div class="squad-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">🎯 Missions</span>
+                        <span class="stat-value">${stats.missions_completed}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">🏆 Victories</span>
+                        <span class="stat-value">${stats.victories}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">📈 Success Rate</span>
+                        <span class="stat-value">${stats.success_rate}%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">⚰️ Casualties</span>
+                        <span class="stat-value">${stats.total_casualties}</span>
+                    </div>
+                </div>
+
+                ${stats.toughest_kaiju ? `
+                    <div class="toughest-kaiju">
+                        <h4>🏆 Toughest Kaiju Defeated</h4>
+                        <div class="kaiju-name">${stats.toughest_kaiju.name}</div>
+                        <div class="kaiju-details">
+                            ${this.capitalizeFirst(stats.toughest_kaiju.size)} ${stats.toughest_kaiju.creature} •
+                            Threat Level ${stats.toughest_kaiju.difficulty} •
+                            ${stats.toughest_kaiju.location}
+                        </div>
+                    </div>
+                ` : ''}
+            ` : `
+                <div class="no-missions">
+                    <p>🆕 Fresh squad with no combat experience</p>
+                    <p>Deploy them on missions to build their reputation!</p>
+                </div>
+            `}
+
+            <div class="soldiers-preview">
+                <h4>👥 Squad Roster</h4>
+                <div class="soldier-list">
+                    ${squad.soldiers.map(soldier => `
+                        <div class="soldier-item" onclick="game.showSoldierDetails('${squad.name}', '${soldier.name}')">
+                            <div class="soldier-name">${soldier.name}</div>
+                            <div class="soldier-level">Level ${soldier.level}</div>
+                            <div class="soldier-skill">Total Skill: ${soldier.total_skill}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Show soldier details modal
+    async showSoldierDetails(squadName, soldierName) {
+        try {
+            const response = await fetch('/api/squad_management', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const squad = data.squads.find(s => s.name === squadName);
+                const soldier = squad.soldiers.find(s => s.name === soldierName);
+
+                if (soldier) {
+                    this.displaySoldierDetails(soldier);
+                    document.getElementById('soldier-details').style.display = 'flex';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading soldier details:', error);
+        }
+    }
+
+    // Display soldier details in modal
+    displaySoldierDetails(soldier) {
+        const content = document.getElementById('soldier-details-content');
+        document.getElementById('soldier-details-title').textContent = `${soldier.name} - Details`;
+
+        content.innerHTML = `
+            <div class="soldier-details-card">
+                <div class="soldier-details-header">
+                    <h2 class="soldier-details-name">${soldier.name}</h2>
+                    <span class="level-badge">Level ${soldier.level}</span>
+                </div>
+
+                <div class="soldier-info-grid">
+                    <div class="info-section">
+                        <h4>⚔️ Combat Stats</h4>
+                        <div class="info-item">
+                            <span class="info-label">Offense</span>
+                            <span class="info-value">${soldier.offense}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Defense</span>
+                            <span class="info-value">${soldier.defense}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Grit</span>
+                            <span class="info-value">${soldier.grit}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Leadership</span>
+                            <span class="info-value">${soldier.leadership}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Skill</span>
+                            <span class="info-value">${soldier.total_skill}</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>📊 Service Record</h4>
+                        <div class="info-item">
+                            <span class="info-label">Missions</span>
+                            <span class="info-value">${soldier.missions_completed}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Successful</span>
+                            <span class="info-value">${soldier.successful_missions}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Kills</span>
+                            <span class="info-value">${soldier.kills}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value">${this.capitalizeFirst(soldier.status)}</span>
+                        </div>
+                    </div>
+
+                    ${soldier.background ? `
+                        <div class="info-section background-info">
+                            <h4>🎖️ Background</h4>
+                            <div class="background-text">${soldier.background}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    closeSoldierDetails() {
+        document.getElementById('soldier-details').style.display = 'none';
+    }
+
+    // Utility function to capitalize first letter
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     async startGame() {
@@ -167,6 +399,27 @@ class KaijuGame {
             squadCard.className = 'squad-card';
             squadCard.setAttribute('data-squad-id', squad.id);
 
+            // Build leadership info display
+            let leadershipHTML = '';
+            if (squad.leader) {
+                const leader = squad.leader;
+                leadershipHTML = `
+                    <div class="leadership-info">
+                        <div class="leader-display">
+                            <span class="leader-icon">👑</span>
+                            <span class="leader-name">${leader.name}</span>
+                            <span class="leader-stat">Leadership: ${leader.leadership}</span>
+                        </div>
+                        ${leader.bonus_attack > 0 ? `
+                            <div class="leadership-bonus">
+                                <span class="bonus-text">Squad Bonus:</span>
+                                <span class="bonus-stats">+${leader.bonus_attack} ATK/DEF, +${leader.bonus_grit} GRT</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
             // Build threat assessment display
             let threatAssessmentHTML = '';
             if (squad.threat_assessment) {
@@ -181,7 +434,7 @@ class KaijuGame {
                         <div class="squad-metrics">
                             <span class="metric">ATK: ${squad.threat_assessment.total_offense}</span>
                             <span class="metric">DEF: ${squad.threat_assessment.total_defense}</span>
-                            <span class="metric">AVG: ${Math.round(squad.threat_assessment.avg_skill)}</span>
+                            <span class="metric">AVG: ${squad.threat_assessment.avg_skill}</span>
                         </div>
                         <div class="tactical-note">
                             ${this.getTacticalNote(squad.threat_assessment)}
@@ -195,11 +448,14 @@ class KaijuGame {
                     <h3 class="squad-name">${squad.name}</h3>
                     <span class="squad-size">${squad.soldiers.length} soldiers</span>
                 </div>
+                ${leadershipHTML}
                 ${threatAssessmentHTML}
                 <div class="soldiers-grid">
                     ${squad.soldiers.map(soldier => `
-                        <div class="soldier-row">
-                            <span class="soldier-name">Lv.${soldier.level} ${soldier.name}</span>
+                        <div class="soldier-row ${soldier.is_leader ? 'leader-row' : ''}">
+                            <span class="soldier-name">
+                                ${soldier.is_leader ? '👑 ' : ''}Lv.${soldier.level} ${soldier.name}
+                            </span>
                             <span class="soldier-stats">O:${soldier.offense} D:${soldier.defense} G:${soldier.grit} L:${soldier.leadership}</span>
                         </div>
                     `).join('')}
@@ -248,8 +504,8 @@ class KaijuGame {
             <div class="soldier-reports">
                 <h4>🎬 Combat Reports</h4>
                 ${battleData.soldier_reports.map((report, index) => `
-                    <div class="soldier-report ${report.status}" style="animation-delay: ${index * 0.8}s">
-                        <h5>🪖 ${report.name} (Level ${report.pre_battle_stats.level})</h5>
+                    <div class="soldier-report ${report.status} ${report.is_leader ? 'leader-report' : ''}" style="animation-delay: ${index * 0.8}s">
+                        <h5>🪖 ${report.is_leader ? '👑 ' : ''}${report.name} (Level ${report.pre_battle_stats.level})${report.is_leader ? ' - Squad Leader' : ''}</h5>
                         <div class="battle-narrative">
                             ${report.battle_narrative.map((line, lineIndex) => `<p class="narrative-line" style="animation-delay: ${(index * 0.8) + (lineIndex * 0.3)}s">${line}</p>`).join('')}
                         </div>

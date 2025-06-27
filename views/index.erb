@@ -13,6 +13,10 @@
         <header class="game-header">
             <div class="header-content">
                 <h1 class="game-title">🦖 KAIJU DEFENSE FORCE</h1>
+                <nav class="game-nav">
+                    <button id="nav-mission-btn" class="nav-btn active">🚨 Mission</button>
+                    <button id="nav-squads-btn" class="nav-btn">👥 Squads</button>
+                </nav>
                 <div class="game-stats">
                     <span class="stat">Missions: <span id="missions-count">0</span></span>
                     <span class="stat">Cities Lost: <span id="cities-destroyed">0</span></span>
@@ -22,6 +26,29 @@
 
         <!-- Main Game Area -->
         <main class="game-main">
+            <!-- Squad Management Panel -->
+            <section id="squad-management-panel" class="panel squad-management-panel" style="display: none;">
+                <div class="panel-header">
+                    <h2>👥 Squad Management</h2>
+                </div>
+
+                <div class="squad-overview">
+                    <div id="squad-list" class="squad-list">
+                        <!-- Squad overview cards will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="soldier-details" id="soldier-details" style="display: none;">
+                    <div class="panel-header">
+                        <h3 id="soldier-details-title">Soldier Details</h3>
+                        <button id="close-soldier-details" class="btn btn-secondary">✖️ Close</button>
+                    </div>
+                    <div id="soldier-details-content">
+                        <!-- Detailed soldier information will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
             <!-- Current Mission Panel -->
             <section id="mission-panel" class="panel mission-panel" style="display: none;">
                 <div class="panel-header">

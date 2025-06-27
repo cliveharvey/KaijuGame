@@ -2,22 +2,89 @@ require_relative 'soldier'
 
 class Squad
   attr_reader :name
-  attr_accessor :soldiers
+  attr_accessor :soldiers, :missions_completed, :victories, :toughest_kaiju_defeated, :total_casualties
 
   def initialize(name = "Boom Boom Shoe Makers", soldier_count = 5)
     @name = name
     @soldiers = soldier_count.times.map { Soldier.new }
+    @missions_completed = 0
+    @victories = 0
+    @toughest_kaiju_defeated = nil
+    @total_casualties = 0
+  end
+
+  def leader
+    # Find soldier with highest leadership (ties go to first found)
+    @soldiers.max_by(&:leadership)
+  end
+
+  def apply_leadership_bonuses
+    squad_leader = leader
+    return unless squad_leader
+
+    # Leadership bonus: 10% of leader's leadership to other squad members
+    leadership_bonus = (squad_leader.leadership * 0.1).round
+
+    @soldiers.each do |soldier|
+      next if soldier == squad_leader  # Leader doesn't boost themselves
+
+      # Apply temporary bonuses (store original values if not already stored)
+      soldier.instance_variable_set(:@original_offense, soldier.offense) unless soldier.instance_variable_get(:@original_offense)
+      soldier.instance_variable_set(:@original_defense, soldier.defense) unless soldier.instance_variable_get(:@original_defense)
+      soldier.instance_variable_set(:@original_grit, soldier.grit) unless soldier.instance_variable_get(:@original_grit)
+
+      # Apply leadership bonuses
+      soldier.offense = soldier.instance_variable_get(:@original_offense) + leadership_bonus
+      soldier.defense = soldier.instance_variable_get(:@original_defense) + leadership_bonus
+      soldier.grit = soldier.instance_variable_get(:@original_grit) + (leadership_bonus / 2).round
+    end
+  end
+
+  def remove_leadership_bonuses
+    # Restore original stats
+    @soldiers.each do |soldier|
+      if soldier.instance_variable_get(:@original_offense)
+        soldier.offense = soldier.instance_variable_get(:@original_offense)
+        soldier.defense = soldier.instance_variable_get(:@original_defense)
+        soldier.grit = soldier.instance_variable_get(:@original_grit)
+
+        # Clear the stored values
+        soldier.remove_instance_variable(:@original_offense)
+        soldier.remove_instance_variable(:@original_defense)
+        soldier.remove_instance_variable(:@original_grit)
+      end
+    end
   end
 
   def combat(kaiju_or_difficulty)
+    # Apply leadership bonuses before combat
+    apply_leadership_bonuses
+
+    # Run combat
     @soldiers.each { |soldier| soldier.combat(kaiju_or_difficulty) }
-    @soldiers.count(&:success) >= 3
+    success = @soldiers.count(&:success) >= 3
+
+    # Remove bonuses after combat to restore original stats
+    remove_leadership_bonuses
+
+    success
   end
 
   def show_squad_details(kaiju = nil)
+    squad_leader = leader
+
     puts "\n📋 ASSEMBLING SQUAD: #{@name}"
+    puts "👑 Squad Leader: #{squad_leader.name} (Leadership: #{squad_leader.leadership})"
+
+    if squad_leader.leadership >= 20
+      leadership_bonus = (squad_leader.leadership * 0.1).round
+      puts "   ✨ Leadership Bonus: +#{leadership_bonus} ATK/DEF, +#{(leadership_bonus/2).round} GRT to squad members"
+    end
+
     puts "Members:"
     @soldiers.each_with_index do |soldier, i|
+      leader_indicator = soldier == squad_leader ? "👑 " : "   "
+
       if kaiju
         risk_level = calculate_kaiju_risk(soldier, kaiju)
         weakness_indicator = case risk_level
@@ -31,7 +98,7 @@ class Squad
           "🟢"
         end
 
-        puts "  #{i + 1}. #{soldier.name} (#{soldier.skill_summary}) #{weakness_indicator}"
+        puts "#{leader_indicator}#{i + 1}. #{soldier.name} (#{soldier.skill_summary}) #{weakness_indicator}"
       else
         # Fallback to general weakness if no kaiju provided
         weakness_indicator = case soldier.weakness_level
@@ -45,7 +112,7 @@ class Squad
           "🟢"
         end
 
-        puts "  #{i + 1}. #{soldier.name} (#{soldier.skill_summary}) #{weakness_indicator}"
+        puts "#{leader_indicator}#{i + 1}. #{soldier.name} (#{soldier.skill_summary}) #{weakness_indicator}"
       end
     end
     puts
@@ -85,6 +152,41 @@ class Squad
     else
       puts "General Risk Legend: 🟢 Low Risk | 🟡 Moderate Risk | 🟠 High Risk | 🔴 Critical Risk"
     end
+  end
+
+  def record_mission_result(success, kaiju_data, casualties)
+    @missions_completed += 1
+    @victories += 1 if success
+    @total_casualties += casualties
+
+    # Track toughest kaiju defeated (only if successful)
+    if success && kaiju_data
+      if @toughest_kaiju_defeated.nil? || kaiju_data[:difficulty] > @toughest_kaiju_defeated[:difficulty]
+        @toughest_kaiju_defeated = {
+          name: kaiju_data[:name_english],
+          designation: kaiju_data[:name_monster],
+          difficulty: kaiju_data[:difficulty],
+          size: kaiju_data[:size],
+          creature: kaiju_data[:creature],
+          location: kaiju_data[:location]
+        }
+      end
+    end
+  end
+
+  def squad_statistics
+    return {} if @missions_completed == 0
+
+    {
+      missions_completed: @missions_completed,
+      victories: @victories,
+      success_rate: ((@victories.to_f / @missions_completed) * 100).round(1),
+      total_casualties: @total_casualties,
+      avg_casualties_per_mission: (@total_casualties.to_f / @missions_completed).round(1),
+      toughest_kaiju: @toughest_kaiju_defeated,
+      veteran_count: @soldiers.count { |s| s.level >= 3 },
+      elite_count: @soldiers.count { |s| s.level >= 5 }
+    }
   end
 
   private

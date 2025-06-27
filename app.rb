@@ -79,10 +79,22 @@ class WebKaijuGame < Sinatra::Base
     battle_text = BattleText.new
 
     squads_data = squads.map.with_index do |squad, index|
+      # Get squad leader
+      squad_leader = squad.leader
+      leadership_bonus = squad_leader ? (squad_leader.leadership * 0.1).round : 0
+
       squad_info = {
         id: index,
         name: squad.name,
+        leader: squad_leader ? {
+          name: squad_leader.name,
+          leadership: squad_leader.leadership,
+          bonus_attack: leadership_bonus,
+          bonus_defense: leadership_bonus,
+          bonus_grit: (leadership_bonus / 2).round
+        } : nil,
         soldiers: squad.soldiers.map do |soldier|
+          is_leader = soldier == squad_leader
           {
             name: soldier.name,
             level: soldier.level,
@@ -91,7 +103,8 @@ class WebKaijuGame < Sinatra::Base
             grit: soldier.grit,
             leadership: soldier.leadership,
             status: soldier.status,
-            total_skill: soldier.total_skill
+            total_skill: soldier.total_skill,
+            is_leader: is_leader
           }
         end
       }
@@ -101,18 +114,26 @@ class WebKaijuGame < Sinatra::Base
         temp_kaiju = OpenStruct.new(kaiju_data)
         casualty_risk = battle_text.send(:estimate_casualty_risk, squad, temp_kaiju)
 
-        # Calculate squad strength metrics
+        # Calculate squad strength metrics (including leadership bonuses)
         total_offense = squad.soldiers.sum(&:offense)
         total_defense = squad.soldiers.sum(&:defense)
         avg_leadership = squad.soldiers.sum(&:leadership) / squad.soldiers.count
         avg_skill = squad.soldiers.sum(&:total_skill) / squad.soldiers.count
+
+        # Add leadership bonus to totals for display
+        if squad_leader && leadership_bonus > 0
+          bonus_members = squad.soldiers.count - 1  # Everyone except leader
+          total_offense += leadership_bonus * bonus_members
+          total_defense += leadership_bonus * bonus_members
+          avg_skill += (leadership_bonus * 2.5 * bonus_members) / squad.soldiers.count  # Approximate skill boost
+        end
 
         squad_info[:threat_assessment] = {
           casualty_risk: casualty_risk,
           total_offense: total_offense,
           total_defense: total_defense,
           avg_leadership: avg_leadership,
-          avg_skill: avg_skill,
+          avg_skill: avg_skill.round,
           kaiju_difficulty: kaiju_data[:difficulty]
         }
       end
@@ -169,11 +190,15 @@ class WebKaijuGame < Sinatra::Base
 
     # Generate individual soldier battle reports
     soldier_reports = []
+    squad_leader = selected_squad.leader
+
     selected_squad.soldiers.each do |soldier|
+      is_leader = soldier == squad_leader
       soldier_report = {
         name: soldier.name,
         status: soldier.status.to_s,
-        battle_narrative: battle_text.battle_summary(soldier),
+        is_leader: is_leader,
+        battle_narrative: battle_text.battle_summary(soldier, is_leader),
         pre_battle_stats: {
           level: soldier.level,
           offense: soldier.offense,
@@ -201,7 +226,11 @@ class WebKaijuGame < Sinatra::Base
         leadership: soldier.leadership
       }
 
-      soldier_level_ups = soldier.complete_mission
+      # Complete mission with success parameter and record kills for successful missions
+      soldier_level_ups = soldier.complete_mission(success)
+      if success && soldier.success
+        soldier.record_kill
+      end
 
       if soldier_level_ups.any?
         level_ups[soldier.name] = soldier_level_ups
@@ -273,6 +302,10 @@ class WebKaijuGame < Sinatra::Base
 
     # Record mission results
     game_state.record_mission_result(success, success, casualties)
+
+    # Record mission result on the squad
+    selected_squad.record_mission_result(success, kaiju_data.merge(location: location_data[:city]), casualties)
+
     game_state.clear_pending_mission
 
     # Update session with modified game state
@@ -342,6 +375,42 @@ class WebKaijuGame < Sinatra::Base
       missions_completed: game_state.get_missions_completed,
       cities_destroyed: game_state.get_cities_destroyed,
       squads: game_state.get_squads.count
+    })
+  end
+
+  # Get squad management data
+  get '/api/squad_management' do
+    game_state = GameState.from_hash(session[:game_state])
+    squads = game_state.get_squads
+
+    squad_data = squads.map do |squad|
+      stats = squad.squad_statistics
+      {
+        name: squad.name,
+        soldier_count: squad.soldiers.count,
+        statistics: stats,
+        soldiers: squad.soldiers.map do |soldier|
+          {
+            name: soldier.name,
+            level: soldier.level,
+            offense: soldier.offense,
+            defense: soldier.defense,
+            grit: soldier.grit,
+            leadership: soldier.leadership,
+            total_skill: soldier.total_skill,
+            status: soldier.status,
+            background: soldier.background,
+            missions_completed: soldier.missions_completed || 0,
+            successful_missions: soldier.successful_missions || 0,
+            kills: soldier.kills || 0
+          }
+        end
+      }
+    end
+
+    json({
+      success: true,
+      squads: squad_data
     })
   end
 

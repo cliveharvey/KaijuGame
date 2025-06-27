@@ -111,7 +111,7 @@ class BattleText
     ]
   end
 
-  def battle_summary(soldier)
+  def battle_summary(soldier, is_leader = false)
     texts = []
 
     # Determine soldier's dominant skill for personalized narrative
@@ -120,12 +120,19 @@ class BattleText
     # Check if soldier is weak for special narrative
     is_weak = soldier.is_weak_soldier?
 
+    # Leader-specific opening if this soldier is the squad leader
+    if is_leader
+      texts << "👑 #{soldier.name} leads the charge with tactical precision"
+    end
+
     # Skill-based movement description
     movement_text = get_skill_based_text(dominant_skill, 'movement')
     if is_weak && soldier.status == :alive
       movement_text += " despite their inexperience"
     elsif is_weak && soldier.status != :alive
       movement_text += " showing incredible courage"
+    elsif is_leader
+      movement_text += " while coordinating squad movements"
     end
     texts << "🎯 #{soldier.name} #{movement_text}"
 
@@ -135,26 +142,48 @@ class BattleText
       action_text += " far beyond their expected capability"
     elsif is_weak && !soldier.success
       action_text += " but was clearly outmatched"
+    elsif is_leader && soldier.success
+      action_text += " inspiring the entire squad"
+    elsif is_leader && !soldier.success
+      action_text += " despite their best leadership efforts"
     end
     texts << "⚔️  #{soldier.name} #{action_text}"
+
+    # Leader-specific tactical action
+    if is_leader && soldier.status != :kia
+      leader_actions = [
+        "coordinated a flanking maneuver",
+        "called out tactical targets",
+        "boosted squad morale with fearless leadership",
+        "directed covering fire for wounded teammates",
+        "maintained unit cohesion under pressure"
+      ]
+      texts << "🎖️  #{soldier.name} #{leader_actions.sample}"
+    end
 
     # Status-specific description
     if soldier.status == :kia
       kia_text = @kia_descriptions.sample
       if is_weak
         kia_text += " - a recruit who gave everything"
+      elsif is_leader
+        kia_text += " - their leadership will be remembered"
       end
       texts << "💀 #{soldier.name} #{kia_text}"
     elsif soldier.status == :injured
       injured_text = @injured_descriptions.sample
       if is_weak
         injured_text += " despite their limited training"
+      elsif is_leader
+        injured_text += " but continued to lead through the pain"
       end
       texts << "🩹 #{soldier.name} #{injured_text}"
     elsif soldier.status == :shaken
       shaken_text = @shaken_descriptions.sample
       if is_weak
         shaken_text += " - understandable for a less experienced soldier"
+      elsif is_leader
+        shaken_text += " but quickly regained composure to lead"
       end
       texts << "⚡ #{soldier.name} #{shaken_text}"
     end
@@ -167,6 +196,8 @@ class BattleText
     if soldier.status == :alive || soldier.status == :shaken
       if is_weak
         texts << "📈 #{soldier.name} gained crucial combat experience from surviving the encounter"
+      elsif is_leader
+        texts << "📈 #{soldier.name} gained valuable leadership experience from commanding under fire"
       else
         texts << "📈 #{soldier.name} gained valuable experience from the encounter"
       end

@@ -15,10 +15,10 @@ body {
 
 /* Game Header */
 .game-header {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border-bottom: 2px solid #00ff88;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-bottom: 3px solid #00d4ff;
     padding: 1rem 0;
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -31,28 +31,62 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .game-title {
     font-family: 'Orbitron', monospace;
     font-weight: 900;
     font-size: 2rem;
-    color: #00ff88;
-    text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    color: #00d4ff;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    margin: 0;
     letter-spacing: 2px;
+}
+
+.game-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-btn {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 2px solid #00d4ff;
+    color: #ecf0f1;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nav-btn:hover {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.nav-btn.active {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #1a1a2e;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
 }
 
 .game-stats {
     display: flex;
     gap: 2rem;
+    font-family: 'Inter', sans-serif;
 }
 
 .stat {
+    color: #ecf0f1;
     font-weight: 500;
-    color: #a0a0a0;
-    text-transform: uppercase;
     font-size: 0.9rem;
-    letter-spacing: 1px;
 }
 
 /* Main Game Area */
@@ -669,4 +703,363 @@ body {
     .btn {
         min-width: 200px;
     }
+}
+
+.leadership-info {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.leader-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.leader-icon {
+    font-size: 1.2rem;
+}
+
+.leader-name {
+    font-weight: 600;
+    color: #ffd700;
+    flex-grow: 1;
+}
+
+.leader-stat {
+    font-size: 0.9rem;
+    color: #f39c12;
+    font-weight: 500;
+}
+
+.leadership-bonus {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.bonus-text {
+    color: #e67e22;
+    font-weight: 500;
+}
+
+.bonus-stats {
+    color: #f39c12;
+    font-weight: 600;
+    background: rgba(243, 156, 18, 0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.soldier-row.leader-row {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+    border-left: 3px solid #ffd700;
+    font-weight: 500;
+}
+
+.soldier-row.leader-row .soldier-name {
+    color: #ffd700;
+}
+
+.soldier-report.leader-report {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+    border-left: 4px solid #ffd700;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+}
+
+.soldier-report.leader-report h5 {
+    color: #ffd700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.soldier-report.leader-report .narrative-line {
+    border-left-color: rgba(255, 215, 0, 0.3);
+}
+
+/* Squad Management Styles */
+.squad-management-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.squad-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.squad-card {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 2px solid #00d4ff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.squad-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+    border-color: #00ff88;
+}
+
+.squad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(236, 240, 241, 0.2);
+}
+
+.squad-name {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #00d4ff;
+    margin: 0;
+}
+
+.squad-soldier-count {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.squad-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: #bdc3c7;
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    color: #ecf0f1;
+    font-weight: 600;
+}
+
+.toughest-kaiju {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(192, 57, 43, 0.1) 100%);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+}
+
+.toughest-kaiju h4 {
+    color: #e74c3c;
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.kaiju-name {
+    color: #ecf0f1;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.kaiju-details {
+    color: #bdc3c7;
+    font-size: 0.9rem;
+}
+
+.no-missions {
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.soldiers-preview {
+    margin-top: 1rem;
+}
+
+.soldiers-preview h4 {
+    color: #00ff88;
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.soldier-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+.soldier-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid #00ff88;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.soldier-item:hover {
+    background: rgba(0, 255, 136, 0.1);
+    transform: translateX(5px);
+}
+
+.soldier-name {
+    color: #ecf0f1;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.soldier-level {
+    color: #f39c12;
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+}
+
+.soldier-skill {
+    color: #bdc3c7;
+    font-size: 0.8rem;
+}
+
+/* Soldier Details Modal */
+.soldier-details {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.soldier-details-card {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 2px solid #00d4ff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.soldier-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+}
+
+.soldier-details-name {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #00d4ff;
+    margin: 0;
+}
+
+.close-details {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.close-details:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+.soldier-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-section {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid #00ff88;
+}
+
+.info-section h4 {
+    color: #00ff88;
+    margin: 0 0 0.8rem 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.3rem 0;
+}
+
+.info-label {
+    color: #bdc3c7;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: #ecf0f1;
+    font-weight: 600;
+}
+
+.level-badge {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.background-info {
+    grid-column: span 2;
+    text-align: center;
+    background: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+}
+
+.background-text {
+    color: #3498db;
+    font-weight: 600;
+    font-size: 1rem;
 }
